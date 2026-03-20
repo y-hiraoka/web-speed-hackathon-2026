@@ -222,3 +222,4 @@ application/upload/**
 !application/upload/**/.gitkeep
 
 .claude/settings.local.json
+.turbo
