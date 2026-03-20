@@ -9,8 +9,6 @@ import { Sequelize } from "sequelize";
 import { initModels } from "@web-speed-hackathon-2026/server/src/models";
 import { insertSeeds } from "@web-speed-hackathon-2026/server/src/seeds";
 
-const SEEDS_DIR = path.resolve(import.meta.dirname, "../../seeds");
-
 let testDbPath: string;
 
 export async function createTestDatabase(): Promise<string> {

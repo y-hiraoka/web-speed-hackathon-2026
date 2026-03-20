@@ -9,6 +9,13 @@ import { DATABASE_PATH } from "@web-speed-hackathon-2026/server/src/paths";
 
 let _sequelize: Sequelize | null = null;
 
+export function getSequelize(): Sequelize {
+  if (_sequelize === null) {
+    throw new Error("Sequelize is not initialized. Call initializeSequelize() first.");
+  }
+  return _sequelize;
+}
+
 export async function initializeSequelize() {
   const prevSequelize = _sequelize;
   _sequelize = null;

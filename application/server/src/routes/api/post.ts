@@ -1,7 +1,8 @@
 import { Router } from "express";
 import httpErrors from "http-errors";
 
-import { Comment, Post } from "@web-speed-hackathon-2026/server/src/models";
+import { Comment, Post, PostsImagesRelation } from "@web-speed-hackathon-2026/server/src/models";
+import { getSequelize } from "@web-speed-hackathon-2026/server/src/sequelize";
 
 export const postRouter = Router();
 
@@ -41,22 +42,33 @@ postRouter.post("/posts", async (req, res) => {
     throw new httpErrors.Unauthorized();
   }
 
-  const post = await Post.create(
-    {
-      ...req.body,
-      userId: req.session.userId,
-    },
-    {
-      include: [
-        {
-          association: "images",
-          through: { attributes: [] },
-        },
-        { association: "movie" },
-        { association: "sound" },
-      ],
-    },
-  );
+  const { images, ...postData } = req.body;
 
-  return res.status(200).type("application/json").send(post);
+  const post = await getSequelize().transaction(async (transaction) => {
+    const created = await Post.create(
+      {
+        ...postData,
+        userId: req.session.userId,
+      },
+      {
+        include: [
+          { association: "movie" },
+          { association: "sound" },
+        ],
+        transaction,
+      },
+    );
+
+    if (images?.length) {
+      await PostsImagesRelation.bulkCreate(
+        images.map((img: { id: string }) => ({ postId: created.id, imageId: img.id })),
+        { transaction },
+      );
+    }
+
+    return created;
+  });
+
+  const fullPost = await Post.findByPk(post.id);
+  return res.status(200).type("application/json").send(fullPost);
 });

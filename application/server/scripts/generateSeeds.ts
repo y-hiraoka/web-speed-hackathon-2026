@@ -2,6 +2,8 @@ import { createWriteStream } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { extractImageMetadata } from "@web-speed-hackathon-2026/server/src/utils/extract_image_metadata";
+
 import { faker } from "@faker-js/faker/locale/ja";
 
 // Set seed for reproducible results
@@ -217,14 +219,26 @@ function generateUsers(count: number, profileImages: ProfileImageSeed[]): UserSe
   return users;
 }
 
-function generateImages(): ImageSeed[] {
-  // Use existing image IDs from public/images/
+async function generateImages(): Promise<ImageSeed[]> {
   const baseTime = now - ONE_WEEK_MS;
-  return EXISTING_IMAGE_IDS.map((id, i) => ({
-    id,
-    alt: "",
-    createdAt: new Date(baseTime + i * 60 * 1000).toISOString(),
-  }));
+  const imagesDir = path.resolve(__dirname, "../../public/images");
+
+  const results: ImageSeed[] = [];
+  for (let i = 0; i < EXISTING_IMAGE_IDS.length; i++) {
+    const id = EXISTING_IMAGE_IDS[i];
+    const filePath = path.join(imagesDir, `${id}.jpg`);
+    const { alt, width, height } = await extractImageMetadata(filePath);
+
+    results.push({
+      id,
+      alt,
+      width,
+      height,
+      createdAt: new Date(baseTime + i * 60 * 1000).toISOString(),
+    });
+  }
+
+  return results;
 }
 
 function generateMovies(): MovieSeed[] {
@@ -701,7 +715,7 @@ async function main() {
   const users = generateUsers(CONFIG.USER_COUNT, profileImages);
 
   console.log("3. Generating Images (using existing assets)...");
-  const images = generateImages();
+  const images = await generateImages();
 
   console.log("4. Generating Movies (using existing assets)...");
   const movies = generateMovies();

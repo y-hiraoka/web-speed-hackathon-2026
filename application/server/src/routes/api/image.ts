@@ -6,7 +6,9 @@ import { fileTypeFromBuffer } from "file-type";
 import httpErrors from "http-errors";
 import { v4 as uuidv4 } from "uuid";
 
+import { Image } from "@web-speed-hackathon-2026/server/src/models";
 import { UPLOAD_PATH } from "@web-speed-hackathon-2026/server/src/paths";
+import { extractImageMetadata } from "@web-speed-hackathon-2026/server/src/utils/extract_image_metadata";
 
 // 変換した画像の拡張子
 const EXTENSION = "jpg";
@@ -32,5 +34,9 @@ imageRouter.post("/images", async (req, res) => {
   await fs.mkdir(path.resolve(UPLOAD_PATH, "images"), { recursive: true });
   await fs.writeFile(filePath, req.body);
 
-  return res.status(200).type("application/json").send({ id: imageId });
+  const { alt, width, height } = await extractImageMetadata(req.body);
+
+  await Image.create({ id: imageId, alt, width, height });
+
+  return res.status(200).type("application/json").send({ id: imageId, alt, width, height });
 });

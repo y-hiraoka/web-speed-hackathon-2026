@@ -1,8 +1,12 @@
+import * as fs from "node:fs/promises";
 import type { Server } from "node:http";
+import * as path from "node:path";
 
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { createTestDatabase, signIn, startServer } from "./setup";
+
+const PUBLIC_IMAGES_DIR = path.resolve(import.meta.dirname, "../../../public/images");
 
 let server: Server;
 let baseUrl: string;
@@ -206,6 +210,25 @@ describe("Posts", () => {
     }
   });
 
+  it("GET /posts — images should include alt, width, height", async () => {
+    // SEED_POST_ID has images attached
+    const res = await fetch(`${baseUrl}/api/v1/posts/${SEED_POST_ID}`);
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.images.length).toBeGreaterThan(0);
+    for (const image of body.images) {
+      expect(image).toHaveProperty("alt");
+      expect(image).toHaveProperty("width");
+      expect(image).toHaveProperty("height");
+      expect(typeof image.alt).toBe("string");
+      expect(image.alt.length).toBeGreaterThan(0);
+      expect(typeof image.width).toBe("number");
+      expect(image.width).toBeGreaterThan(0);
+      expect(typeof image.height).toBe("number");
+      expect(image.height).toBeGreaterThan(0);
+    }
+  });
+
   it("GET /posts — should support pagination with offset", async () => {
     const res1 = await fetch(`${baseUrl}/api/v1/posts?limit=2&offset=0`);
     const res2 = await fetch(`${baseUrl}/api/v1/posts?limit=2&offset=2`);
@@ -259,6 +282,45 @@ describe("Posts", () => {
     const body = await res.json();
     expect(body).toHaveProperty("id");
     expect(body).toHaveProperty("text", "Test post from vitest");
+  });
+
+  it("POST /posts — should create a post with images that have alt, width, height", async () => {
+    const cookie = await signIn(baseUrl, SEED_USER.username, SEED_USER.password);
+
+    // Upload an image from the public/images directory
+    const imageFile = await fs.readFile(
+      path.join(PUBLIC_IMAGES_DIR, "029b4b75-bbcc-4aa5-8bd7-e4bb12a33cd3.jpg"),
+    );
+    const uploadRes = await fetch(`${baseUrl}/api/v1/images`, {
+      method: "POST",
+      headers: { "Content-Type": "application/octet-stream", Cookie: cookie },
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument -- Buffer is valid as fetch body at runtime
+      body: imageFile as any,
+    });
+    expect(uploadRes.status).toBe(200);
+    const uploadBody = await uploadRes.json();
+    expect(uploadBody).toHaveProperty("id");
+    expect(uploadBody).toHaveProperty("alt");
+    expect(uploadBody).toHaveProperty("width");
+    expect(uploadBody).toHaveProperty("height");
+    expect(uploadBody.width).toBeGreaterThan(0);
+    expect(uploadBody.height).toBeGreaterThan(0);
+
+    // Create a post with the uploaded image
+    const postRes = await fetch(`${baseUrl}/api/v1/posts`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Cookie: cookie },
+      body: JSON.stringify({
+        text: "Post with image",
+        images: [{ id: uploadBody.id }],
+      }),
+    });
+    expect(postRes.status).toBe(200);
+    const postBody = await postRes.json();
+    expect(postBody.images.length).toBe(1);
+    expect(postBody.images[0]).toHaveProperty("alt");
+    expect(postBody.images[0]).toHaveProperty("width", uploadBody.width);
+    expect(postBody.images[0]).toHaveProperty("height", uploadBody.height);
   });
 });
 
