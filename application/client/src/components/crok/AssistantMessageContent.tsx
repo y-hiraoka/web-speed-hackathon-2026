@@ -15,7 +15,6 @@ export const AssistantMessageContent = ({ content }: Props) => {
   return content ? (
     <Markdown
       components={{ pre: CodeBlock }}
-      key={content}
       rehypePlugins={[rehypeKatex]}
       remarkPlugins={[remarkMath, remarkGfm]}
     >
