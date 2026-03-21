@@ -89,7 +89,7 @@ searchRouter.get("/search", async (req, res) => {
 
   const result = mergedPosts.slice(offset || 0, (offset || 0) + (limit || mergedPosts.length));
 
-  const isNegative = keywords ? analyzeSentiment(keywords).label === "negative" : false;
+  const isNegative = keywords ? (await analyzeSentiment(keywords)).label === "negative" : false;
 
   return res.status(200).type("application/json").send({ posts: result, isNegative });
 });

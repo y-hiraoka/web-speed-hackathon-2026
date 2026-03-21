@@ -8,4 +8,8 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const dicPath = path.resolve(__dirname, "../../..", "public/dicts");
 
 const builder = Bluebird.promisifyAll(kuromoji.builder({ dicPath }));
-export const tokenizer: Tokenizer<IpadicFeatures> = await builder.buildAsync();
+const tokenizerPromise: Promise<Tokenizer<IpadicFeatures>> = builder.buildAsync();
+
+export async function getTokenizer(): Promise<Tokenizer<IpadicFeatures>> {
+  return tokenizerPromise;
+}
