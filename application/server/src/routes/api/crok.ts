@@ -14,7 +14,7 @@ crokRouter.get("/crok/suggestions", async (req, res) => {
 
   const query = req.query["q"];
   if (typeof query === "string" && query.trim()) {
-    const result = filterSuggestionsBM25(candidates, query);
+    const result = await filterSuggestionsBM25(candidates, query);
     return res.json(result);
   }
 

@@ -8,4 +8,8 @@ import { PUBLIC_PATH } from "@web-speed-hackathon-2026/server/src/paths";
 const dicPath = path.resolve(PUBLIC_PATH, "dicts");
 
 const builder = Bluebird.promisifyAll(kuromoji.builder({ dicPath }));
-export const tokenizer: Tokenizer<IpadicFeatures> = await builder.buildAsync();
+const tokenizerPromise: Promise<Tokenizer<IpadicFeatures>> = builder.buildAsync();
+
+export async function getTokenizer(): Promise<Tokenizer<IpadicFeatures>> {
+  return tokenizerPromise;
+}

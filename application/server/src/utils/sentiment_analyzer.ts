@@ -1,13 +1,14 @@
 import analyze from "negaposi-analyzer-ja";
 
-import { tokenizer } from "@web-speed-hackathon-2026/server/src/utils/tokenizer";
+import { getTokenizer } from "@web-speed-hackathon-2026/server/src/utils/tokenizer";
 
 type SentimentResult = {
   score: number;
   label: "positive" | "negative" | "neutral";
 };
 
-export function analyzeSentiment(text: string): SentimentResult {
+export async function analyzeSentiment(text: string): Promise<SentimentResult> {
+  const tokenizer = await getTokenizer();
   const tokens = tokenizer.tokenize(text);
   const score = analyze(tokens);
 

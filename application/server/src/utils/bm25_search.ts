@@ -2,7 +2,7 @@ import { BM25 } from "bayesian-bm25";
 import type { IpadicFeatures } from "kuromoji";
 import _ from "lodash";
 
-import { tokenizer } from "@web-speed-hackathon-2026/server/src/utils/tokenizer";
+import { getTokenizer } from "@web-speed-hackathon-2026/server/src/utils/tokenizer";
 
 const STOP_POS = new Set(["助詞", "助動詞", "記号"]);
 
@@ -12,10 +12,11 @@ function extractTokens(tokens: IpadicFeatures[]): string[] {
     .map((t) => t.surface_form.toLowerCase());
 }
 
-export function filterSuggestionsBM25(
+export async function filterSuggestionsBM25(
   candidates: string[],
   query: string,
-): { suggestions: string[]; queryTokens: string[] } {
+): Promise<{ suggestions: string[]; queryTokens: string[] }> {
+  const tokenizer = await getTokenizer();
   const queryTokens = extractTokens(tokenizer.tokenize(query));
   if (queryTokens.length === 0) return { suggestions: [], queryTokens: [] };
 
