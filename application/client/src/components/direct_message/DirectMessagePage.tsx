@@ -19,6 +19,7 @@ import { getProfileImagePath } from "@web-speed-hackathon-2026/client/src/utils/
 interface Props {
   conversationError: Error | null;
   conversation: Models.DirectMessageConversation;
+  messages: Models.DirectMessage[];
   activeUser: Models.User;
   isPeerTyping: boolean;
   isSubmitting: boolean;
@@ -29,6 +30,7 @@ interface Props {
 export const DirectMessagePage = ({
   conversationError,
   conversation,
+  messages,
   activeUser,
   isPeerTyping,
   isSubmitting,
@@ -46,7 +48,6 @@ export const DirectMessagePage = ({
   const [text, setText] = useState("");
   const textAreaRows = Math.min((text || "").split("\n").length, 5);
   const isInvalid = text.trim().length === 0;
-  const scrollHeightRef = useRef(0);
 
   const handleChange = useCallback(
     (event: ChangeEvent<HTMLTextAreaElement>) => {
@@ -80,19 +81,12 @@ export const DirectMessagePage = ({
     [onSubmit, text],
   );
 
+  // Scroll to bottom when messages change
   useEffect(() => {
-    const id = setInterval(() => {
-      const height = Number(
-        window.getComputedStyle(document.body).height.replace("px", ""),
-      );
-      if (height !== scrollHeightRef.current) {
-        scrollHeightRef.current = height;
-        window.scrollTo(0, height);
-      }
-    }, 1);
-
-    return () => clearInterval(id);
-  }, []);
+    requestAnimationFrame(() => {
+      window.scrollTo(0, document.body.scrollHeight);
+    });
+  }, [messages.length]);
 
   if (conversationError != null) {
     return (
@@ -123,18 +117,19 @@ export const DirectMessagePage = ({
       </header>
 
       <div className="bg-cax-surface-subtle flex-1 space-y-4 overflow-y-auto px-4 pt-4 pb-8">
-        {conversation.messages.length === 0 && (
+        {messages.length === 0 && (
           <p className="text-cax-text-muted text-center text-sm">
             まだメッセージはありません。最初のメッセージを送信してみましょう。
           </p>
         )}
 
         <ul className="grid gap-3" data-testid="dm-message-list">
-          {conversation.messages.map((message) => {
+          {messages.map((message) => {
             const isActiveUserSend = message.sender.id === activeUser.id;
 
             return (
               <li
+                key={message.id}
                 className={classNames(
                   "flex flex-col w-full",
                   isActiveUserSend ? "items-end" : "items-start",

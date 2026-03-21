@@ -1,4 +1,4 @@
-import { and, asc, countDistinct, desc, eq, exists, ne, or } from "drizzle-orm";
+import { and, asc, countDistinct, desc, eq, exists, lt, ne, or } from "drizzle-orm";
 
 import type { Database } from "./client";
 import * as schema from "./schema";
@@ -150,10 +150,26 @@ const conversationWith = {
   },
 };
 
+const conversationWithoutMessages = {
+  initiator: { columns: userColumns, with: userWith },
+  member: { columns: userColumns, with: userWith },
+};
+
+// Latest 1 message only (for conversation list sorting)
+const conversationWithLatestMessage = {
+  initiator: { columns: userColumns, with: userWith },
+  member: { columns: userColumns, with: userWith },
+  messages: {
+    with: dmSenderWith,
+    orderBy: [desc(schema.directMessages.createdAt)],
+    limit: 1,
+  },
+};
+
 export async function findConversationByPk(db: Database, id: string) {
   return db.query.directMessageConversations.findFirst({
     where: eq(schema.directMessageConversations.id, id),
-    with: conversationWith,
+    with: conversationWithoutMessages,
   });
 }
 
@@ -166,8 +182,52 @@ export async function findConversationForUser(db: Database, conversationId: stri
         eq(schema.directMessageConversations.memberId, userId),
       ),
     ),
-    with: conversationWith,
+    with: conversationWithoutMessages,
   });
+}
+
+export async function findConversationMessages(
+  db: Database,
+  conversationId: string,
+  opts: { limit?: number; cursor?: { createdAt: string; id: string } } = {},
+) {
+  const limit = opts.limit ?? 30;
+  const conditions = [eq(schema.directMessages.conversationId, conversationId)];
+
+  if (opts.cursor) {
+    conditions.push(
+      or(
+        lt(schema.directMessages.createdAt, opts.cursor.createdAt),
+        and(
+          eq(schema.directMessages.createdAt, opts.cursor.createdAt),
+          lt(schema.directMessages.id, opts.cursor.id),
+        ),
+      )!,
+    );
+  }
+
+  const messages = await db.query.directMessages.findMany({
+    where: and(...conditions),
+    with: dmSenderWith,
+    orderBy: [desc(schema.directMessages.createdAt), desc(schema.directMessages.id)],
+    limit: limit + 1,
+  });
+
+  const hasMore = messages.length > limit;
+  const resultMessages = hasMore ? messages.slice(0, limit) : messages;
+
+  // Reverse to ASC order for display
+  resultMessages.reverse();
+
+  let nextCursor: string | null = null;
+  if (hasMore && resultMessages.length > 0) {
+    const oldest = resultMessages[0]!;
+    nextCursor = Buffer.from(
+      JSON.stringify({ createdAt: oldest.createdAt, id: oldest.id }),
+    ).toString("base64url");
+  }
+
+  return { messages: resultMessages, hasMore, nextCursor };
 }
 
 export async function findConversationsForUser(db: Database, userId: string) {
@@ -184,13 +244,13 @@ export async function findConversationsForUser(db: Database, userId: string) {
           .where(eq(schema.directMessages.conversationId, schema.directMessageConversations.id)),
       ),
     ),
-    with: conversationWith,
+    with: conversationWithLatestMessage,
   });
 
   // Sort by latest message createdAt DESC
   convs.sort((a, b) => {
-    const aLast = a.messages[a.messages.length - 1]?.createdAt ?? "";
-    const bLast = b.messages[b.messages.length - 1]?.createdAt ?? "";
+    const aLast = a.messages[0]?.createdAt ?? "";
+    const bLast = b.messages[0]?.createdAt ?? "";
     return bLast.localeCompare(aLast);
   });
 

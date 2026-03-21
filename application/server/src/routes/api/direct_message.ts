@@ -9,6 +9,7 @@ import {
   countUnreadMessages,
   findConversationByPk,
   findConversationForUser,
+  findConversationMessages,
   findConversationsForUser,
   findDmByPk,
   findUserByPk,
@@ -104,6 +105,36 @@ directMessageRouter.get("/dm/:conversationId", async (req, res) => {
   }
 
   return res.status(200).type("application/json").send(conversation);
+});
+
+directMessageRouter.get("/dm/:conversationId/messages", async (req, res) => {
+  if (req.session.userId === undefined) {
+    throw new httpErrors.Unauthorized();
+  }
+
+  const db = getDb();
+  const conversation = await findConversationForUser(db, req.params.conversationId, req.session.userId);
+  if (!conversation) {
+    throw new httpErrors.NotFound();
+  }
+
+  const limit = req.query["limit"] != null ? Number(req.query["limit"]) : 30;
+  let cursor: { createdAt: string; id: string } | undefined;
+  if (typeof req.query["cursor"] === "string") {
+    try {
+      const parsed = JSON.parse(Buffer.from(req.query["cursor"], "base64url").toString());
+      if (typeof parsed.createdAt === "string" && typeof parsed.id === "string") {
+        cursor = parsed;
+      } else {
+        throw new Error("Invalid cursor fields");
+      }
+    } catch {
+      throw new httpErrors.BadRequest("Invalid cursor");
+    }
+  }
+
+  const result = await findConversationMessages(db, req.params.conversationId, { limit, cursor });
+  return res.status(200).type("application/json").send(result);
 });
 
 directMessageRouter.ws("/dm/:conversationId", async (req, _res) => {

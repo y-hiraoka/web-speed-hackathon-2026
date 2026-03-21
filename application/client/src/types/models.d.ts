@@ -64,8 +64,10 @@ declare namespace Models {
   interface DirectMessageConversation {
     id: string;
     initiator: Models.User;
+    initiatorId: string;
     member: Models.User;
-    messages: Array<Models.DirectMessage>;
+    memberId: string;
+    messages?: Array<Models.DirectMessage>;
   }
 
   interface ChatMessage {

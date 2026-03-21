@@ -22,21 +22,31 @@ const CONTENT_TYPES: Record<ImageFormat, string> = {
   jpg: "image/jpeg",
 };
 
+// In-memory cache for findImageFile results
+const filePathCache = new Map<string, string | null>();
+
 async function findImageFile(
   imageId: string,
   subdir: string,
 ): Promise<string | null> {
+  const cacheKey = `${imageId}:${subdir}`;
+  if (filePathCache.has(cacheKey)) {
+    return filePathCache.get(cacheKey)!;
+  }
+
   for (const dir of [UPLOAD_PATH, PUBLIC_PATH]) {
     for (const ext of IMAGE_EXTENSIONS) {
       const filePath = path.resolve(dir, subdir, `${imageId}.${ext}`);
       try {
         await fsp.access(filePath);
+        filePathCache.set(cacheKey, filePath);
         return filePath;
       } catch {
         // continue
       }
     }
   }
+  filePathCache.set(cacheKey, null);
   return null;
 }
 
@@ -64,6 +74,15 @@ function parseQueryParams(query: Record<string, unknown>) {
   }
 
   return { w, format, q };
+}
+
+// Disk cache for transformed images
+const CACHE_DIR = path.resolve(UPLOAD_PATH, ".cache/images");
+
+function getTransformCachePath(imageId: string, w: number | undefined, format: string, q: number): string {
+  const key = `${imageId}-${w ?? "orig"}-${format}-${q}`;
+  const hash = crypto.createHash("md5").update(key).digest("hex");
+  return path.resolve(CACHE_DIR, `${hash}.${format}`);
 }
 
 async function handleImageRequest(
@@ -107,7 +126,22 @@ async function handleImageRequest(
     return;
   }
 
+  // Check disk cache for transformed image
+  const cachePath = getTransformCachePath(imageId, w, format, q);
+  try {
+    await fsp.access(cachePath);
+    // Cache hit - serve from disk cache
+    res.type(CONTENT_TYPES[format]);
+    fs.createReadStream(cachePath).pipe(res);
+    return;
+  } catch {
+    // Cache miss - transform and cache
+  }
+
   res.type(CONTENT_TYPES[format]);
+
+  // Ensure cache directory exists
+  await fsp.mkdir(CACHE_DIR, { recursive: true });
 
   const transform = sharp();
   if (w != null) {
@@ -121,7 +155,23 @@ async function handleImageRequest(
     }
   });
 
-  fs.createReadStream(filePath).pipe(transform).pipe(res);
+  // Write to temp file first, then rename to avoid serving partial files
+  const tmpPath = `${cachePath}.${process.pid}.tmp`;
+  const cacheStream = fs.createWriteStream(tmpPath);
+  const sourceStream = fs.createReadStream(filePath).pipe(transform);
+
+  sourceStream.pipe(cacheStream);
+  sourceStream.pipe(res);
+
+  cacheStream.on("finish", () => {
+    fsp.rename(tmpPath, cachePath).catch(() => {
+      // Ignore rename errors (e.g. another process already wrote it)
+      fsp.unlink(tmpPath).catch(() => {});
+    });
+  });
+  cacheStream.on("error", () => {
+    fsp.unlink(tmpPath).catch(() => {});
+  });
 }
 
 export const imageServeRouter = Router();
