@@ -2,7 +2,7 @@ import bcrypt from "bcrypt";
 import { Router } from "express";
 import httpErrors from "http-errors";
 import { v4 as uuidv4 } from "uuid";
-import { eq } from "drizzle-orm";
+
 import { LibsqlError } from "@libsql/client";
 
 import { getDb } from "@web-speed-hackathon-2026/server/src/db/client";
