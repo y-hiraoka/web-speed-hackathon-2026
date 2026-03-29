@@ -1,7 +1,6 @@
 import path from "node:path";
 
 import react from "@vitejs/plugin-react";
-import { viteStaticCopy } from "vite-plugin-static-copy";
 import { defineConfig } from "vite";
 
 const DIST_PATH = path.resolve(__dirname, "../dist");
@@ -10,14 +9,6 @@ export default defineConfig({
   root: __dirname,
   plugins: [
     react(),
-    viteStaticCopy({
-      targets: [
-        {
-          src: path.resolve(__dirname, "node_modules/katex/dist/fonts/*"),
-          dest: "styles/fonts",
-        },
-      ],
-    }),
   ],
   build: {
     outDir: DIST_PATH,
