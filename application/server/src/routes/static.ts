@@ -29,13 +29,13 @@ staticRouter.use(
 staticRouter.use(
   serveStatic(CLIENT_DIST_PATH, {
     etag: true,
+    index: false,
     lastModified: true,
     setHeaders(res, filePath) {
       // Vite outputs hashed filenames in the assets directory — cache them immutably
       if (filePath.includes("/assets/")) {
         res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
       } else {
-        // index.html and other non-hashed files
         res.setHeader("Cache-Control", "public, max-age=0, must-revalidate");
       }
     },

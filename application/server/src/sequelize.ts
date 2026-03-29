@@ -26,7 +26,9 @@ export async function initializeSequelize() {
     storage: TEMP_PATH,
   });
 
-  // Enable WAL mode and other SQLite optimizations for better read/write concurrency and performance
+  await _sequelize.authenticate();
+
+  // Enable SQLite optimizations after connection is established
   await _sequelize.query("PRAGMA journal_mode=WAL;");
   await _sequelize.query("PRAGMA synchronous=NORMAL;");
   await _sequelize.query("PRAGMA cache_size=-64000;");
