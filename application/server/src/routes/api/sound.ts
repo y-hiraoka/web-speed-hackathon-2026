@@ -1,5 +1,6 @@
 import { execFile } from "child_process";
 import { promises as fs } from "fs";
+import os from "os";
 import path from "path";
 import { promisify } from "util";
 
@@ -98,17 +99,43 @@ soundRouter.post("/sounds", async (req, res) => {
   }
 
   const type = await fileTypeFromBuffer(req.body);
-  if (type === undefined || type.ext !== EXTENSION) {
+  if (type === undefined || !type.mime.startsWith("audio/")) {
     throw new httpErrors.BadRequest("Invalid file type");
   }
 
   const soundId = uuidv4();
 
+  // Extract metadata from the original file before conversion
   const { artist, title } = await extractMetadataFromSound(req.body);
 
-  const filePath = path.resolve(UPLOAD_PATH, `./sounds/${soundId}.${EXTENSION}`);
-  await fs.mkdir(path.resolve(UPLOAD_PATH, "sounds"), { recursive: true });
-  await fs.writeFile(filePath, req.body);
+  const outputDir = path.resolve(UPLOAD_PATH, "sounds");
+  await fs.mkdir(outputDir, { recursive: true });
+
+  const outputPath = path.resolve(outputDir, `${soundId}.${EXTENSION}`);
+
+  if (type.ext === EXTENSION) {
+    // Already MP3, just save
+    await fs.writeFile(outputPath, req.body);
+  } else {
+    // Convert to MP3 using ffmpeg
+    const tmpInput = path.join(os.tmpdir(), `${soundId}-input.${type.ext}`);
+    try {
+      await fs.writeFile(tmpInput, req.body);
+      const metadataArgs = [
+        "-metadata", `artist=${artist ?? "Unknown Artist"}`,
+        "-metadata", `title=${title ?? "Unknown Title"}`,
+      ];
+      await execFileAsync("ffmpeg", [
+        "-i", tmpInput,
+        ...metadataArgs,
+        "-vn",
+        "-y",
+        outputPath,
+      ]);
+    } finally {
+      await fs.unlink(tmpInput).catch(() => {});
+    }
+  }
 
   return res.status(200).type("application/json").send({ artist, id: soundId, title });
 });

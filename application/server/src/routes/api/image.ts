@@ -1,5 +1,8 @@
+import { execFile } from "child_process";
 import { promises as fs } from "fs";
+import os from "os";
 import path from "path";
+import { promisify } from "util";
 
 import { Router } from "express";
 import { fileTypeFromBuffer } from "file-type";
@@ -7,6 +10,8 @@ import httpErrors from "http-errors";
 import { v4 as uuidv4 } from "uuid";
 
 import { UPLOAD_PATH } from "@web-speed-hackathon-2026/server/src/paths";
+
+const execFileAsync = promisify(execFile);
 
 // 変換した画像の拡張子
 const EXTENSION = "jpg";
@@ -22,15 +27,35 @@ imageRouter.post("/images", async (req, res) => {
   }
 
   const type = await fileTypeFromBuffer(req.body);
-  if (type === undefined || type.ext !== EXTENSION) {
+  if (type === undefined || !type.mime.startsWith("image/")) {
     throw new httpErrors.BadRequest("Invalid file type");
   }
 
   const imageId = uuidv4();
 
-  const filePath = path.resolve(UPLOAD_PATH, `./images/${imageId}.${EXTENSION}`);
-  await fs.mkdir(path.resolve(UPLOAD_PATH, "images"), { recursive: true });
-  await fs.writeFile(filePath, req.body);
+  const outputDir = path.resolve(UPLOAD_PATH, "images");
+  await fs.mkdir(outputDir, { recursive: true });
+
+  const outputPath = path.resolve(outputDir, `${imageId}.${EXTENSION}`);
+
+  if (type.ext === EXTENSION) {
+    // Already JPEG, just save
+    await fs.writeFile(outputPath, req.body);
+  } else {
+    // Convert to JPEG using ffmpeg
+    const tmpInput = path.join(os.tmpdir(), `${imageId}-input.${type.ext}`);
+    try {
+      await fs.writeFile(tmpInput, req.body);
+      await execFileAsync("ffmpeg", [
+        "-i", tmpInput,
+        "-y",
+        "-q:v", "2",
+        outputPath,
+      ]);
+    } finally {
+      await fs.unlink(tmpInput).catch(() => {});
+    }
+  }
 
   return res.status(200).type("application/json").send({ id: imageId });
 });

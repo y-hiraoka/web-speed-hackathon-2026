@@ -38,31 +38,6 @@ export default defineConfig({
         find: /^kuromoji$/,
         replacement: path.resolve(__dirname, "node_modules/kuromoji/build/kuromoji.js"),
       },
-      {
-        find: /^@ffmpeg\/ffmpeg$/,
-        replacement: path.resolve(__dirname, "node_modules/@ffmpeg/ffmpeg/dist/esm/index.js"),
-      },
-      {
-        find: /^@ffmpeg\/core\/wasm$/,
-        replacement: path.resolve(
-          __dirname,
-          "node_modules/@ffmpeg/core/dist/umd/ffmpeg-core.wasm",
-        ),
-      },
-      {
-        find: /^@ffmpeg\/core$/,
-        replacement: path.resolve(
-          __dirname,
-          "node_modules/@ffmpeg/core/dist/umd/ffmpeg-core.js",
-        ),
-      },
-      {
-        find: "@imagemagick/magick-wasm/magick.wasm",
-        replacement: path.resolve(
-          __dirname,
-          "node_modules/@imagemagick/magick-wasm/dist/magick.wasm",
-        ),
-      },
     ],
   },
   define: {
@@ -75,9 +50,5 @@ export default defineConfig({
     proxy: {
       "/api": "http://localhost:3000",
     },
-  },
-  assetsInclude: ["**/*.wasm"],
-  optimizeDeps: {
-    exclude: ["@ffmpeg/ffmpeg", "@ffmpeg/core"],
   },
 });
