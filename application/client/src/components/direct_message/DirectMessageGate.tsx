@@ -1,4 +1,4 @@
-import { Helmet } from "react-helmet";
+import { DocumentTitle } from "@web-speed-hackathon-2026/client/src/components/foundation/DocumentTitle";
 
 interface Props {
   headline: string;
@@ -15,9 +15,7 @@ export const DirectMessageGate = ({
 }: Props) => {
   return (
     <>
-      <Helmet>
-        <title>ダイレクトメッセージ - CaX</title>
-      </Helmet>
+      <DocumentTitle title="ダイレクトメッセージ - CaX" />
       <section className="space-y-4 px-6 py-12 text-center">
         <p className="text-lg font-bold">{headline}</p>
         {description !== "" ? <p className="text-cax-text-muted text-sm">{description}</p> : null}

@@ -1,6 +1,6 @@
-import { Helmet } from "react-helmet";
 import { useParams } from "react-router";
 
+import { DocumentTitle } from "@web-speed-hackathon-2026/client/src/components/foundation/DocumentTitle";
 import { InfiniteScroll } from "@web-speed-hackathon-2026/client/src/components/foundation/InfiniteScroll";
 import { UserProfilePage } from "@web-speed-hackathon-2026/client/src/components/user_profile/UserProfilePage";
 import { NotFoundContainer } from "@web-speed-hackathon-2026/client/src/containers/NotFoundContainer";
@@ -22,9 +22,7 @@ export const UserProfileContainer = () => {
 
   if (isLoadingUser) {
     return (
-      <Helmet>
-        <title>読込中 - CaX</title>
-      </Helmet>
+      <DocumentTitle title="読込中 - CaX" />
     );
   }
 
@@ -34,9 +32,7 @@ export const UserProfileContainer = () => {
 
   return (
     <InfiniteScroll fetchMore={fetchMore} items={posts}>
-      <Helmet>
-        <title>{user.name} さんのタイムライン - CaX</title>
-      </Helmet>
+      <DocumentTitle title={`${user.name} さんのタイムライン - CaX`} />
       <UserProfilePage timeline={posts} user={user} />
     </InfiniteScroll>
   );
