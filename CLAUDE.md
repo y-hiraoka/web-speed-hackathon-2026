@@ -14,7 +14,7 @@ Web Speed Hackathon 2026 — a performance optimization competition. The repo co
 
 ## Tech Stack
 
-**Client** (`application/client/`): React 19 + Redux + React Router 7, bundled with Vite + @vitejs/plugin-react. Heavy WASM deps: FFmpeg, ImageMagick, web-llm (on-device LLM). CSS via PostCSS.
+**Client** (`application/client/`): React 19 + React Router 7, bundled with Vite + @vitejs/plugin-react. CSS via PostCSS + Tailwind CSS 4.
 
 **Server** (`application/server/`): Express 5 + Sequelize ORM + SQLite, runs via tsx. WebSocket support via ws.
 
@@ -58,23 +58,26 @@ cd scoring-tool && pnpm install && tsx src/index.ts --applicationUrl http://loca
 
 ### Client (`application/client/src/`)
 - `components/` — UI components (foundation, timeline, post, direct_message, crok AI chat, etc.)
-- `containers/` — Redux-connected container components (AppContainer, TimelineContainer, PostContainer, etc.)
-- `store/` — Redux store with redux-form
+- `containers/` — Container components (AppContainer, TimelineContainer, PostContainer, etc.)
 - `hooks/` — Custom hooks: `use_fetch`, `use_infinite_fetch`, `use_sse`, `use_ws`, etc.
-- `utils/` — Heavy utilities: `bm25_search`, `convert_image` (ImageMagick WASM), `convert_movie` (FFmpeg WASM), `convert_sound`, `negaposi_analyzer`
+- `utils/` — Utilities: `fetchers`, `get_path`, `create_translator`, etc.
 - Entry: `index.tsx` → renders into `index.html` (at client root, Vite convention)
 
 ### Server (`application/server/src/`)
 - `models/` — Sequelize models: User, Post, Comment, Image, Movie, Sound, DirectMessage, etc.
 - `routes/api/` — REST API routes: auth, post, user, image, movie, sound, search, direct_message, crok, initialize
 - `routes/static.ts` — serves client dist + public/upload files
+- `routes/ssr.ts` — SSR data injection for initial page load optimization
 - API documented in `server/openapi.yaml` (OpenAPI 3.0)
 - DB: SQLite file, seeded from `seeds/` directory
 
-### Key Performance Bottlenecks (by design)
-- Client-side WASM processing: FFmpeg, ImageMagick, web-llm
-- jQuery + lodash full bundles
-- All media processing happens client-side
+### Optimizations Applied
+- Vite build with code splitting, tree shaking, minification
+- Media conversion moved to server-side (ffmpeg CLI)
+- Translation via browser Translator API (replaced web-llm)
+- Kuromoji/negaposi analysis moved to server-side
+- Server-side data injection for initial render
+- Proper caching headers, gzip compression, DB indexes
 
 ## Scoring
 
