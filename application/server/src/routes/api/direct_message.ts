@@ -214,13 +214,34 @@ directMessageRouter.post("/dm/:conversationId/read", async (req, res) => {
       ? conversation.initiatorId
       : conversation.memberId;
 
-  await DirectMessage.update(
+  const [affectedCount] = await DirectMessage.update(
     { isRead: true },
     {
       where: { conversationId: conversation.id, senderId: peerId, isRead: false },
-      individualHooks: true,
     },
   );
+
+  if (affectedCount > 0) {
+    // Notify once after bulk update instead of per-row via individualHooks
+    const unreadCount = await DirectMessage.count({
+      where: {
+        senderId: { [Op.ne]: req.session.userId },
+        isRead: false,
+      },
+      include: [
+        {
+          association: "conversation",
+          attributes: [],
+          where: {
+            [Op.or]: [{ initiatorId: req.session.userId }, { memberId: req.session.userId }],
+          },
+          required: true,
+        },
+      ],
+    });
+
+    eventhub.emit(`dm:unread/${req.session.userId}`, { unreadCount });
+  }
 
   return res.status(200).type("application/json").send({});
 });
