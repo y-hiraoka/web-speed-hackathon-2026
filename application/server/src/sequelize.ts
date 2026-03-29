@@ -18,6 +18,9 @@ export async function initializeSequelize() {
   await prevSequelize?.close();
 
   await fs.mkdir(TEMP_DIR, { recursive: true });
+  // Remove stale WAL/SHM files before copying to avoid corruption
+  await fs.unlink(`${TEMP_PATH}-wal`).catch(() => {});
+  await fs.unlink(`${TEMP_PATH}-shm`).catch(() => {});
   await fs.copyFile(DATABASE_PATH, TEMP_PATH);
 
   _sequelize = new Sequelize({
