@@ -1,5 +1,4 @@
-import Bluebird from "bluebird";
-import kuromoji, { type Tokenizer, type IpadicFeatures } from "kuromoji";
+import type { Tokenizer, IpadicFeatures } from "kuromoji";
 import {
   useEffect,
   useLayoutEffect,
@@ -11,10 +10,6 @@ import {
 } from "react";
 
 import { FontAwesomeIcon } from "@web-speed-hackathon-2026/client/src/components/foundation/FontAwesomeIcon";
-import {
-  extractTokens,
-  filterSuggestionsBM25,
-} from "@web-speed-hackathon-2026/client/src/utils/bm25_search";
 import { fetchJSON } from "@web-speed-hackathon-2026/client/src/utils/fetchers";
 
 interface Props {
@@ -97,7 +92,11 @@ export const ChatInput = ({ isStreaming, onSendMessage }: Props) => {
     let mounted = true;
 
     const init = async () => {
-      const builder = Bluebird.promisifyAll(kuromoji.builder({ dicPath: "/dicts" }));
+      const [Bluebird, kuromojiModule] = await Promise.all([
+        import("bluebird"),
+        import("kuromoji"),
+      ]);
+      const builder = Bluebird.default.promisifyAll(kuromojiModule.default.builder({ dicPath: "/dicts" }));
       const nextTokenizer = await builder.buildAsync();
       if (mounted) {
         setTokenizer(nextTokenizer);
@@ -128,6 +127,7 @@ export const ChatInput = ({ isStreaming, onSendMessage }: Props) => {
         return;
       }
 
+      const { extractTokens, filterSuggestionsBM25 } = await import("@web-speed-hackathon-2026/client/src/utils/bm25_search");
       const tokens = extractTokens(tokenizer.tokenize(inputValue));
       const results = filterSuggestionsBM25(tokenizer, candidates, tokens);
 
