@@ -1,33 +1,14 @@
-import { execFile } from "child_process";
 import { promises as fs } from "fs";
-import os from "os";
 import path from "path";
-import { promisify } from "util";
 
 import { Router } from "express";
-import { fileTypeFromBuffer } from "file-type";
 import httpErrors from "http-errors";
+import sharp from "sharp";
 import { v4 as uuidv4 } from "uuid";
 
 import { UPLOAD_PATH } from "@web-speed-hackathon-2026/server/src/paths";
 
-const execFileAsync = promisify(execFile);
-
-const EXTENSION = "webp";
-
 export const imageRouter = Router();
-
-async function getImageDimensions(filePath: string): Promise<{ width: number; height: number }> {
-  const { stdout } = await execFileAsync("ffprobe", [
-    "-v", "error",
-    "-select_streams", "v:0",
-    "-show_entries", "stream=width,height",
-    "-of", "json",
-    filePath,
-  ]);
-  const { width, height } = JSON.parse(stdout).streams[0];
-  return { width, height };
-}
 
 imageRouter.post("/images", async (req, res) => {
   if (req.session.userId === undefined) {
@@ -37,32 +18,21 @@ imageRouter.post("/images", async (req, res) => {
     throw new httpErrors.BadRequest();
   }
 
-  const type = await fileTypeFromBuffer(req.body);
-  if (type === undefined || !type.mime.startsWith("image/")) {
-    throw new httpErrors.BadRequest("Invalid file type");
-  }
-
   const imageId = uuidv4();
+  const ext = "webp";
 
   const outputDir = path.resolve(UPLOAD_PATH, "images");
   await fs.mkdir(outputDir, { recursive: true });
 
-  const outputPath = path.resolve(outputDir, `${imageId}.${EXTENSION}`);
+  const outputPath = path.resolve(outputDir, `${imageId}.${ext}`);
 
-  const tmpInput = path.join(os.tmpdir(), `${imageId}-input.${type.ext}`);
-  try {
-    await fs.writeFile(tmpInput, req.body);
-    await execFileAsync("ffmpeg", [
-      "-i", tmpInput,
-      "-y",
-      "-q:v", "80",
-      outputPath,
-    ]);
-  } finally {
-    await fs.unlink(tmpInput).catch(() => {});
-  }
+  const image = sharp(req.body);
+  const metadata = await image.metadata();
 
-  const { width, height } = await getImageDimensions(outputPath);
+  await image.webp({ quality: 80 }).toFile(outputPath);
 
-  return res.status(200).type("application/json").send({ id: imageId, width, height });
+  const width = metadata.width ?? 0;
+  const height = metadata.height ?? 0;
+
+  return res.status(200).type("application/json").send({ id: imageId, ext, width, height });
 });

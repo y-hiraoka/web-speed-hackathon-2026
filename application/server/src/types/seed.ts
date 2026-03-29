@@ -31,7 +31,7 @@ export type UserSeed = DateToString<
   >
 >;
 
-export type ImageSeed = DateToString<Pick<InferAttributes<Image>, "id" | "alt" | "width" | "height" | "createdAt">>;
+export type ImageSeed = DateToString<Pick<InferAttributes<Image>, "id" | "alt" | "width" | "height" | "ext" | "createdAt">>;
 
 export type MovieSeed = Pick<InferAttributes<Movie>, "id">;
 

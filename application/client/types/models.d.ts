@@ -39,6 +39,7 @@ declare namespace Models {
     id: string;
     width: number;
     height: number;
+    ext: string;
   }
 
   interface Sound {
