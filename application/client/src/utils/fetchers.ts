@@ -16,6 +16,10 @@ export async function sendFile<T>(url: string, file: File): Promise<T> {
     },
     method: "POST",
   });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw { responseJSON: body };
+  }
   return res.json() as Promise<T>;
 }
 
@@ -27,5 +31,9 @@ export async function sendJSON<T>(url: string, data: object): Promise<T> {
     },
     method: "POST",
   });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw { responseJSON: body };
+  }
   return res.json() as Promise<T>;
 }

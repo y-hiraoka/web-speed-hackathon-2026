@@ -39,13 +39,13 @@ export const NewPostModalContainer = ({ id }: Props) => {
       return;
     }
 
-    const handleToggle = () => {
-      // モーダル開閉時にkeyを更新することでフォームの状態をリセットする
+    const handleClose = () => {
+      // モーダルが閉じたときにkeyを更新し、次回開くときフォームの状態をリセットする
       setResetKey((key) => key + 1);
     };
-    element.addEventListener("toggle", handleToggle);
+    element.addEventListener("close", handleClose);
     return () => {
-      element.removeEventListener("toggle", handleToggle);
+      element.removeEventListener("close", handleClose);
     };
   }, []);
 

@@ -7,7 +7,7 @@ import kuromoji from "kuromoji";
 import analyze from "negaposi-analyzer-ja";
 import { Op } from "sequelize";
 
-import { Post } from "@web-speed-hackathon-2026/server/src/models";
+import { Post, User } from "@web-speed-hackathon-2026/server/src/models";
 import { parseSearchQuery } from "@web-speed-hackathon-2026/server/src/utils/parse_search_query.js";
 
 export const searchRouter = Router();
@@ -76,35 +76,67 @@ searchRouter.get("/search", async (req, res) => {
   const dateWhere =
     dateConditions.length > 0 ? { createdAt: Object.assign({}, ...dateConditions) } : {};
 
-  // テキスト検索とユーザー名検索を1つのクエリに統合
-  const posts = await Post.findAll({
-    include: searchTerm
-      ? [
-          {
-            association: "user",
-            attributes: { exclude: ["profileImageId"] },
-            include: [{ association: "profileImage" }],
-            required: false,
-          },
-        ]
-      : undefined,
-    limit,
-    offset,
-    order: [["createdAt", "DESC"]],
-    where: {
-      ...dateWhere,
-      ...(searchTerm
-        ? {
-            [Op.or]: [
-              { text: { [Op.like]: searchTerm } },
-              { "$user.username$": { [Op.like]: searchTerm } },
-              { "$user.name$": { [Op.like]: searchTerm } },
-            ],
-          }
-        : {}),
-    },
-    subQuery: false,
-  });
+  // テキスト検索
+  const textPosts = searchTerm
+    ? await Post.findAll({
+        order: [["createdAt", "DESC"]],
+        where: {
+          ...dateWhere,
+          text: { [Op.like]: searchTerm },
+        },
+      })
+    : [];
 
-  return res.status(200).type("application/json").send(posts);
+  // ユーザー名・表示名検索
+  let userPosts: typeof textPosts = [];
+  if (searchTerm) {
+    const matchingUsers = await User.findAll({
+      attributes: ["id"],
+      where: {
+        [Op.or]: [
+          { username: { [Op.like]: searchTerm } },
+          { name: { [Op.like]: searchTerm } },
+        ],
+      },
+    });
+    if (matchingUsers.length > 0) {
+      const userIds = matchingUsers.map((u) => u.id);
+      userPosts = await Post.findAll({
+        order: [["createdAt", "DESC"]],
+        where: {
+          ...dateWhere,
+          userId: { [Op.in]: userIds },
+        },
+      });
+    }
+  }
+
+  // 日付のみ指定の場合
+  const datePosts =
+    !searchTerm && (sinceDate || untilDate)
+      ? await Post.findAll({
+          order: [["createdAt", "DESC"]],
+          where: dateWhere,
+        })
+      : [];
+
+  // 重複排除してマージ
+  const postIdSet = new Set<string>();
+  const merged: typeof textPosts = [];
+  for (const post of [...textPosts, ...userPosts, ...datePosts]) {
+    if (!postIdSet.has(post.id)) {
+      postIdSet.add(post.id);
+      merged.push(post);
+    }
+  }
+
+  // createdAt DESC でソート
+  merged.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+  // ページネーション
+  const start = offset ?? 0;
+  const end = limit != null ? start + limit : merged.length;
+  const result = merged.slice(start, end);
+
+  return res.status(200).type("application/json").send(result);
 });
