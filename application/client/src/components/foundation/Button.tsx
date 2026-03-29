@@ -1,4 +1,3 @@
-import classNames from "classnames";
 import { ComponentPropsWithRef, ReactNode } from "react";
 
 interface Props extends ComponentPropsWithRef<"button"> {
@@ -17,17 +16,7 @@ export const Button = ({
 }: Props) => {
   return (
     <button
-      className={classNames(
-        "flex items-center justify-center gap-2 rounded-full px-4 py-2 border",
-        "disabled:opacity-50 disabled:cursor-not-allowed",
-        {
-          "bg-cax-brand text-cax-surface-raised hover:bg-cax-brand-strong border-transparent":
-            variant === "primary",
-          "bg-cax-surface text-cax-text-muted hover:bg-cax-surface-subtle border-cax-border":
-            variant === "secondary",
-        },
-        className,
-      )}
+      className={`flex items-center justify-center gap-2 rounded-full px-4 py-2 border disabled:opacity-50 disabled:cursor-not-allowed ${variant === "primary" ? "bg-cax-brand text-cax-surface-raised hover:bg-cax-brand-strong border-transparent" : "bg-cax-surface text-cax-text-muted hover:bg-cax-surface-subtle border-cax-border"} ${className ?? ""}`}
       type="button"
       {...props}
     >
