@@ -35,4 +35,18 @@ export async function initializeSequelize() {
   await _sequelize.query("PRAGMA temp_store=MEMORY;");
 
   initModels(_sequelize);
+
+  // Create indexes at runtime instead of storing them in database.sqlite
+  // to keep the seed DB file small enough for Git
+  await _sequelize.query("CREATE INDEX IF NOT EXISTS idx_posts_user_id ON Posts (userId);");
+  await _sequelize.query("CREATE INDEX IF NOT EXISTS idx_posts_created_at ON Posts (createdAt);");
+  await _sequelize.query("CREATE INDEX IF NOT EXISTS idx_comments_post_id ON Comments (postId);");
+  await _sequelize.query("CREATE INDEX IF NOT EXISTS idx_comments_created_at ON Comments (createdAt);");
+  await _sequelize.query("CREATE INDEX IF NOT EXISTS idx_direct_messages_conversation_id ON DirectMessages (conversationId);");
+  await _sequelize.query("CREATE INDEX IF NOT EXISTS idx_direct_messages_sender_is_read ON DirectMessages (senderId, isRead);");
+  await _sequelize.query("CREATE INDEX IF NOT EXISTS idx_direct_messages_created_at ON DirectMessages (createdAt);");
+  await _sequelize.query("CREATE INDEX IF NOT EXISTS idx_dm_conversations_initiator_id ON DirectMessageConversations (initiatorId);");
+  await _sequelize.query("CREATE INDEX IF NOT EXISTS idx_dm_conversations_member_id ON DirectMessageConversations (memberId);");
+  await _sequelize.query("CREATE INDEX IF NOT EXISTS idx_posts_images_post_id ON PostsImagesRelations (postId);");
+  await _sequelize.query("CREATE INDEX IF NOT EXISTS idx_posts_images_image_id ON PostsImagesRelations (imageId);");
 }

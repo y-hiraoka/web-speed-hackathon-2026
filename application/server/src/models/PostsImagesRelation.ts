@@ -36,10 +36,6 @@ export function initPostsImagesRelation(sequelize: Sequelize) {
     },
     {
       sequelize,
-      indexes: [
-        { fields: ["postId"] },
-        { fields: ["imageId"] },
-      ],
     },
   );
 }
