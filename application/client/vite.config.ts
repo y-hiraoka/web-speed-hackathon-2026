@@ -22,6 +22,7 @@ export default defineConfig({
   build: {
     outDir: DIST_PATH,
     emptyOutDir: true,
+    target: "esnext",
   },
   resolve: {
     alias: [
