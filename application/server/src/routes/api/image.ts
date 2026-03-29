@@ -13,8 +13,7 @@ import { UPLOAD_PATH } from "@web-speed-hackathon-2026/server/src/paths";
 
 const execFileAsync = promisify(execFile);
 
-// 変換した画像の拡張子
-const EXTENSION = "jpg";
+const EXTENSION = "webp";
 
 export const imageRouter = Router();
 
@@ -50,23 +49,17 @@ imageRouter.post("/images", async (req, res) => {
 
   const outputPath = path.resolve(outputDir, `${imageId}.${EXTENSION}`);
 
-  if (type.ext === EXTENSION) {
-    // Already JPEG, just save
-    await fs.writeFile(outputPath, req.body);
-  } else {
-    // Convert to JPEG using ffmpeg
-    const tmpInput = path.join(os.tmpdir(), `${imageId}-input.${type.ext}`);
-    try {
-      await fs.writeFile(tmpInput, req.body);
-      await execFileAsync("ffmpeg", [
-        "-i", tmpInput,
-        "-y",
-        "-q:v", "2",
-        outputPath,
-      ]);
-    } finally {
-      await fs.unlink(tmpInput).catch(() => {});
-    }
+  const tmpInput = path.join(os.tmpdir(), `${imageId}-input.${type.ext}`);
+  try {
+    await fs.writeFile(tmpInput, req.body);
+    await execFileAsync("ffmpeg", [
+      "-i", tmpInput,
+      "-y",
+      "-q:v", "80",
+      outputPath,
+    ]);
+  } finally {
+    await fs.unlink(tmpInput).catch(() => {});
   }
 
   const { width, height } = await getImageDimensions(outputPath);
