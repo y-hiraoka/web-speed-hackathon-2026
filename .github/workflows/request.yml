@@ -57,18 +57,10 @@ jobs:
       - run: |
           pnpm start \
             --applicationUrl ${TARGET_URL} \
-            --participationKind ${PARTICIPATION_KIND} \
-            --participationGitHubId ${PARTICIPATION_GITHUB_ID} \
-            --dashboardServerUrl ${DASHBOARD_SERVER_URL} \
-            --dashboardServerToken ${DASHBOARD_SERVER_TOKEN} \
-            --competitionStartAt 2026-03-20T10:30:00.000+09:00 \
-            --competitionEndAt 2026-03-21T18:30:00.000+09:00
+            --competitionStartAt 2020-01-01T00:00:00.000+09:00 \
+            --competitionEndAt 2099-12-31T23:59:59.000+09:00
         working-directory: scoring-tool
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TZ: "Asia/Tokyo"
           TARGET_URL: ${{ fromJSON(steps.issue-parsed.outputs.payload).url }}
-          PARTICIPATION_KIND: ${{ fromJSON(steps.issue-parsed.outputs.payload).kind }}
-          PARTICIPATION_GITHUB_ID: ${{ github.event.issue.user.login }}
-          DASHBOARD_SERVER_URL: ${{ secrets.DASHBOARD_SERVER_URL }}
-          DASHBOARD_SERVER_TOKEN: ${{ secrets.DASHBOARD_SERVER_TOKEN }}
