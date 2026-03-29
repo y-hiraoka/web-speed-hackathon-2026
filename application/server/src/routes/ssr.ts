@@ -25,7 +25,7 @@ interface InitialData {
 }
 
 // Catch-all handler for SPA routes — serves index.html with injected initial data
-ssrRouter.get("*", async (req, res, next) => {
+ssrRouter.get("/{*splat}", async (req, res, next) => {
   // Skip API routes and static assets
   const url = req.path;
   if (
