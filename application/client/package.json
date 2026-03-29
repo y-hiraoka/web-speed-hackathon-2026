@@ -23,7 +23,7 @@
     "fast-average-color": "9.5.0",
     "gifler": "github:themadcreator/gifler#v0.3.0",
     "image-size": "2.0.2",
-"json-repair-js": "1.0.0",
+    "json-repair-js": "1.0.0",
     "katex": "0.16.25",
     "kuromoji": "0.1.2",
     "langs": "2.0.0",
@@ -49,11 +49,12 @@
     "tiny-invariant": "1.3.3"
   },
   "devDependencies": {
+    "@tailwindcss/postcss": "4.2.1",
     "@tsconfig/strictest": "2.0.8",
     "@types/bluebird": "3.5.42",
     "@types/common-tags": "1.8.4",
     "@types/encoding-japanese": "2.2.1",
-"@types/kuromoji": "0.1.3",
+    "@types/kuromoji": "0.1.3",
     "@types/langs": "2.0.5",
     "@types/lodash": "4.17.20",
     "@types/node": "22.18.8",
@@ -69,6 +70,7 @@
     "postcss-import": "16.1.1",
     "postcss-preset-env": "10.4.0",
     "react-markdown": "10.1.0",
+    "tailwindcss": "4.2.1",
     "typescript": "5.9.3",
     "vite": "8.0.3",
     "vite-plugin-static-copy": "4.0.0"

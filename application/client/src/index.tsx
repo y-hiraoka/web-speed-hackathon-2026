@@ -1,3 +1,4 @@
+import "./tailwind.css";
 import "./index.css";
 import "./buildinfo.ts";
 
