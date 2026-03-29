@@ -12,36 +12,39 @@ interface Props {
  * クリックすると再生・一時停止を切り替えます。
  */
 export const PausableMovie = ({ src }: Props) => {
-  const imgRef = useRef<HTMLImageElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isPlaying, setIsPlaying] = useState(true);
-
 
   // prefers-reduced-motion に対応
   const reducedMotion =
     typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-  const handleLoad = useCallback(() => {
-    const img = imgRef.current;
+  const handleLoadedMetadata = useCallback(() => {
+    const video = videoRef.current;
     const canvas = canvasRef.current;
-    if (img && canvas) {
-      // e2e互換: canvas にサイズを設定
-      canvas.width = img.naturalWidth || 1;
-      canvas.height = img.naturalHeight || 1;
+    if (video && canvas) {
+      canvas.width = video.videoWidth || 1;
+      canvas.height = video.videoHeight || 1;
     }
-    if (reducedMotion) {
+    if (reducedMotion && video) {
+      video.pause();
       setIsPlaying(false);
     }
   }, [reducedMotion]);
 
   const handleClick = useCallback(() => {
-    setIsPlaying((prev) => !prev);
-  }, []);
+    const video = videoRef.current;
+    if (!video) return;
 
-  // 一時停止中は静止画を表示するため、srcをデータURLに差し替えるのではなく
-  // CSSで制御する（GIFアニメーションはブラウザがネイティブに処理）
-  // 注: ブラウザによってはGIFの一時停止はサポートされないが、
-  // パフォーマンス面ではJS GIFデコードを排除することが重要
+    if (isPlaying) {
+      video.pause();
+      setIsPlaying(false);
+    } else {
+      video.play();
+      setIsPlaying(true);
+    }
+  }, [isPlaying]);
 
   return (
     <AspectRatioBox aspectHeight={1} aspectWidth={1}>
@@ -51,10 +54,15 @@ export const PausableMovie = ({ src }: Props) => {
         onClick={handleClick}
         type="button"
       >
-        <img
-          ref={imgRef}
+        <video
+          ref={videoRef}
+          autoPlay
           className="w-full"
-          onLoad={handleLoad}
+          loop
+          muted
+          onLoadedMetadata={handleLoadedMetadata}
+          playsInline
+          preload="metadata"
           src={src}
         />
         {/* e2e互換用の非表示canvas */}
