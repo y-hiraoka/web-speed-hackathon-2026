@@ -69,9 +69,6 @@ importers:
       omggif:
         specifier: 1.0.10
         version: 1.0.10
-      pako:
-        specifier: 2.1.0
-        version: 2.1.0
       piexifjs:
         specifier: 1.0.6
         version: 1.0.6
@@ -124,9 +121,6 @@ importers:
       '@types/omggif':
         specifier: 1.0.5
         version: 1.0.5
-      '@types/pako':
-        specifier: 2.0.4
-        version: 2.0.4
       '@types/piexifjs':
         specifier: 1.0.0
         version: 1.0.0
@@ -1266,9 +1260,6 @@ packages:
 
   '@types/omggif@1.0.5':
     resolution: {integrity: sha512-gDQJflz1rOgEcUXkMAl80bDGN46f5mp8GbcM5dyvq+zsFV6YRBRtmNxlJJ5mjY77T7BRkRFzdIBVmK90QYhCxA==}
-
-  '@types/pako@2.0.4':
-    resolution: {integrity: sha512-VWDCbrLeVXJM9fihYodcLiIv0ku+AlOa/TQ1SvYOaBuyrSKgEcro95LJyIsJ4vSo6BXIxOKxiJAat04CmST9Fw==}
 
   '@types/piexifjs@1.0.0':
     resolution: {integrity: sha512-PPiGeCkmkZQgYjvqtjD3kp4OkbCox2vEFVuK4DaLVOIazJLAXk+/ujbizkIPH5CN4AnN9Clo5ckzUlaj3+SzCA==}
@@ -2545,9 +2536,6 @@ packages:
   p-map@7.0.4:
     resolution: {integrity: sha512-tkAQEw8ysMzmkhgw8k+1U/iPhWNhykKnSk4Rd5zLoPJCuJaGRPo6YposrZgaxHKzDHdDWWZvE/Sk7hsL2X/CpQ==}
     engines: {node: '>=18'}
-
-  pako@2.1.0:
-    resolution: {integrity: sha512-w+eufiZ1WuJYgPXbV/PO3NCMEc3xqylkKHzp8bxp1uW4qaSNQUkwmLLEc3kKsfz8lpV1F8Ht3U1Cm+9Srog2ug==}
 
   parse-entities@4.0.2:
     resolution: {integrity: sha512-GG2AQYWoLgL877gQIKeRPGO1xF9+eG1ujIb5soS5gPvLQ1y2o8FL90w2QWNdf9I361Mpp7726c+lj3U0qK1uGw==}
@@ -4125,8 +4113,6 @@ snapshots:
       undici-types: 6.21.0
 
   '@types/omggif@1.0.5': {}
-
-  '@types/pako@2.0.4': {}
 
   '@types/piexifjs@1.0.0': {}
 
@@ -5720,8 +5706,6 @@ snapshots:
     optional: true
 
   p-map@7.0.4: {}
-
-  pako@2.1.0: {}
 
   parse-entities@4.0.2:
     dependencies:
