@@ -17,7 +17,7 @@ export const ImageArea = ({ images }: Props) => {
               // CSS Grid で表示領域を指定する
               className={`bg-cax-surface-subtle ${images.length !== 1 ? "col-span-1" : "col-span-2"} ${images.length > 2 && (images.length !== 3 || idx !== 0) ? "row-span-1" : "row-span-2"}`}
             >
-              <CoveredImage alt={image.alt} src={getImagePath(image.id)} />
+              <CoveredImage alt={image.alt} src={getImagePath(image.id)} width={image.width} height={image.height} />
             </div>
           );
         })}

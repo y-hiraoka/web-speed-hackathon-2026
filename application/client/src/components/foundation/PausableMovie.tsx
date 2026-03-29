@@ -56,7 +56,7 @@ export const PausableMovie = ({ src }: Props) => {
         <video
           ref={videoRef}
           autoPlay
-          className="w-full"
+          className="w-full aspect-square object-cover"
           loop
           muted
           onLoadedMetadata={handleLoadedMetadata}

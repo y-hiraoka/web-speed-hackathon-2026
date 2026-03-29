@@ -18,6 +18,18 @@ const EXTENSION = "jpg";
 
 export const imageRouter = Router();
 
+async function getImageDimensions(filePath: string): Promise<{ width: number; height: number }> {
+  const { stdout } = await execFileAsync("ffprobe", [
+    "-v", "error",
+    "-select_streams", "v:0",
+    "-show_entries", "stream=width,height",
+    "-of", "json",
+    filePath,
+  ]);
+  const { width, height } = JSON.parse(stdout).streams[0];
+  return { width, height };
+}
+
 imageRouter.post("/images", async (req, res) => {
   if (req.session.userId === undefined) {
     throw new httpErrors.Unauthorized();
@@ -57,5 +69,7 @@ imageRouter.post("/images", async (req, res) => {
     }
   }
 
-  return res.status(200).type("application/json").send({ id: imageId });
+  const { width, height } = await getImageDimensions(outputPath);
+
+  return res.status(200).type("application/json").send({ id: imageId, width, height });
 });

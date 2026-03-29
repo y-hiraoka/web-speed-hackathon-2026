@@ -17,7 +17,7 @@ interface Props {
 }
 
 export const SoundPlayer = ({ sound }: Props) => {
-  const { data: waveform, isLoading } = useFetch<WaveformData>(
+  const { data: waveform } = useFetch<WaveformData>(
     `/api/v1/sounds/${sound.id}/waveform`,
     fetchJSON,
   );
@@ -43,10 +43,6 @@ export const SoundPlayer = ({ sound }: Props) => {
     });
   }, []);
 
-  if (isLoading || waveform === null) {
-    return null;
-  }
-
   return (
     <div className="bg-cax-surface-subtle flex h-full w-full items-center justify-center">
       <audio ref={audioRef} loop={true} onTimeUpdate={handleTimeUpdate} preload="none" src={soundUrl} />
@@ -69,13 +65,17 @@ export const SoundPlayer = ({ sound }: Props) => {
         <div className="pt-2">
           <AspectRatioBox aspectHeight={1} aspectWidth={10}>
             <div className="relative h-full w-full">
-              <div className="absolute inset-0 h-full w-full">
-                <SoundWaveSVG max={waveform.max} peaks={waveform.peaks} />
-              </div>
-              <div
-                className="bg-cax-surface-subtle absolute inset-0 h-full w-full opacity-75"
-                style={{ left: `${currentTimeRatio * 100}%` }}
-              ></div>
+              {waveform != null ? (
+                <>
+                  <div className="absolute inset-0 h-full w-full">
+                    <SoundWaveSVG max={waveform.max} peaks={waveform.peaks} />
+                  </div>
+                  <div
+                    className="bg-cax-surface-subtle absolute inset-0 h-full w-full opacity-75"
+                    style={{ left: `${currentTimeRatio * 100}%` }}
+                  ></div>
+                </>
+              ) : null}
             </div>
           </AspectRatioBox>
         </div>
