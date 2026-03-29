@@ -45,3 +45,9 @@ entry: {
 ## 依存関係・注意点
 
 - Babel の targets 変更（issue 004）と合わせて実施する
+
+## Vite 移行による解消見込み (issue 000)
+
+**Vite に移行することで自然に解消される見込み。** Vite 移行時にエントリポイントから `core-js` と `regenerator-runtime` のインポートを削除する。Vite はモダンブラウザをターゲットとするため、これらのポリフィルは不要。Babel 自体も廃止されるため `useBuiltIns` の設定も無関係になる。
+
+→ Vite 移行後に、ビルド成果物に core-js / regenerator-runtime のコードが含まれていないことを確認するタスク。

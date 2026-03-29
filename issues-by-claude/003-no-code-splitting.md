@@ -51,3 +51,9 @@ M
 
 - webpack の `mode: "production"` への変更（issue 001）と合わせて行うと効果的
 - `chunkFormat: false` を先に修正しないと動的 import が機能しない
+
+## Vite 移行による解消見込み (issue 000)
+
+**Vite に移行することで自然に解消される見込み。** Vite は Rollup ベースのビルドで、dynamic import (`import()`) を自動的にコード分割する。Webpack の `splitChunks: false` や `chunkFormat: false` に相当する制約はなく、`React.lazy()` + `import()` によるルートベースの分割がそのまま機能する。
+
+→ Vite 移行後に、dynamic import が正しくチャンク分割されていること、初期バンドルに不要なライブラリ（web-llm, ffmpeg, imagemagick 等）が含まれていないことを確認するタスク。ただし `React.lazy()` の導入はアプリケーションコード側の変更が別途必要。

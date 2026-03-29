@@ -41,3 +41,9 @@ S
 
 - `core-js` の全量インポート削除と合わせて行う（issue 005 参照）
 - `@babel/preset-react` の `development: true` も `false` に変更すべき（不要な開発用チェックが含まれる）
+
+## Vite 移行による解消見込み (issue 000)
+
+**Vite に移行することで自然に解消される見込み。** Vite は esbuild でトランスパイルするため Babel 自体が不要になる。esbuild はデフォルトでモダンブラウザをターゲットとし、IE11 向けの過剰なダウントランスパイル（async/await → regenerator、arrow function → function 等）は行われない。`babel.config.js` は Vite 移行時に廃止する。
+
+→ Vite 移行後に、ビルド成果物が ES2020+ の構文（async/await, optional chaining 等）を含んでいることを確認するタスク。

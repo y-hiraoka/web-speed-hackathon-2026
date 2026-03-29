@@ -40,3 +40,9 @@ S
 ## 依存関係・注意点
 
 - HtmlWebpackPlugin で `inject: false` が設定されているため、手動でテンプレートを修正する必要がある
+
+## Vite 移行による解消見込み (issue 000)
+
+**Vite に移行することで自然に解消される見込み。** Vite は `<script type="module" src="...">` を生成し、`type="module"` は仕様上自動的に `defer` と同等の非同期読み込みとなる。HTML パーサーをブロックせず、DOM 構築と並行してスクリプトがダウンロードされる。`index.html` は Vite のエントリポイントとして書き直すため、`window.addEventListener("load", ...)` も同時に修正する。
+
+→ Vite 移行後に、生成された HTML の script タグが `type="module"` であること、レンダリングブロックが発生していないことを確認するタスク。

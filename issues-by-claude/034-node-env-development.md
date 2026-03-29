@@ -40,3 +40,9 @@ S
 ## 依存関係・注意点
 
 - webpack の `mode: "production"` 変更（issue 001）と合わせて実施
+
+## Vite 移行による解消見込み (issue 000)
+
+**Vite に移行することで自然に解消される見込み。** Vite は `vite build` コマンドで自動的に `NODE_ENV=production` を設定する。React の production ビルド、各ライブラリの production コードパスが有効化され、開発用チェックや詳細エラーメッセージが除去される。`EnvironmentPlugin` や Babel の `development: true` に相当する問題は Vite では発生しない。
+
+→ Vite 移行後に、React が production モードで動作していること（React DevTools で確認）、`process.env.NODE_ENV` が `"production"` になっていることを確認するタスク。

@@ -31,3 +31,9 @@ S
 ## 依存関係・注意点
 
 なし
+
+## Vite 移行による解消見込み (issue 000)
+
+**Vite に移行することで自然に解消される見込み。** Vite は production ビルドでソースマップをバンドルに埋め込まない（デフォルトで `build.sourcemap: false`）。`devtool: "inline-source-map"` に相当する設定は Vite では再現しないため、移行するだけで本 issue は解消される。
+
+→ Vite 移行後に、ビルド成果物に inline source map が含まれていないことを確認するタスク。

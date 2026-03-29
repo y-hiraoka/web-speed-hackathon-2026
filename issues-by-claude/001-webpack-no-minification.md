@@ -53,3 +53,9 @@ S
 
 - `NODE_ENV=development` でビルドしている点 (`package.json` の `build` スクリプト) も同時に修正が必要
 - `devtool: "inline-source-map"` も production では `source-map` または削除すべき（issue 002 参照）
+
+## Vite 移行による解消見込み (issue 000)
+
+**Vite に移行することで自然に解消される見込み。** Vite は production ビルド (`vite build`) でデフォルトで esbuild によるミニファイが有効であり、Tree Shaking・コード分割・モジュール連結も自動的に行われる。Webpack の `mode: "none"` や `optimization` セクションの非最適化設定は Vite では再現しないため、移行するだけで本 issue は解消される。
+
+→ Vite 移行後に、ビルド成果物のサイズが適切にミニファイされていることを確認するタスク。
