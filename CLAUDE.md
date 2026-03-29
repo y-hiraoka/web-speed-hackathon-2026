@@ -14,7 +14,7 @@ Web Speed Hackathon 2026 — a performance optimization competition. The repo co
 
 ## Tech Stack
 
-**Client** (`application/client/`): React 19 + Redux + React Router 7, bundled with Webpack 5 + Babel. Heavy WASM deps: FFmpeg, ImageMagick, web-llm (on-device LLM). CSS via PostCSS. The baseline build is intentionally unoptimized (`minimize: false`, `splitChunks: false`, `concatenateModules: false`, `mode: "none"`, `devtool: "inline-source-map"`).
+**Client** (`application/client/`): React 19 + Redux + React Router 7, bundled with Vite + @vitejs/plugin-react. Heavy WASM deps: FFmpeg, ImageMagick, web-llm (on-device LLM). CSS via PostCSS.
 
 **Server** (`application/server/`): Express 5 + Sequelize ORM + SQLite, runs via tsx. WebSocket support via ws.
 
@@ -29,7 +29,7 @@ All commands run from `application/` directory:
 mise trust && mise install
 pnpm install --frozen-lockfile
 
-# Build client (Webpack)
+# Build client (Vite)
 pnpm run build
 
 # Start server (http://localhost:3000)
@@ -62,7 +62,7 @@ cd scoring-tool && pnpm install && tsx src/index.ts --applicationUrl http://loca
 - `store/` — Redux store with redux-form
 - `hooks/` — Custom hooks: `use_fetch`, `use_infinite_fetch`, `use_sse`, `use_ws`, etc.
 - `utils/` — Heavy utilities: `bm25_search`, `convert_image` (ImageMagick WASM), `convert_movie` (FFmpeg WASM), `convert_sound`, `negaposi_analyzer`
-- Entry: `index.tsx` → renders into `index.html` template
+- Entry: `index.tsx` → renders into `index.html` (at client root, Vite convention)
 
 ### Server (`application/server/src/`)
 - `models/` — Sequelize models: User, Post, Comment, Image, Movie, Sound, DirectMessage, etc.
@@ -72,8 +72,6 @@ cd scoring-tool && pnpm install && tsx src/index.ts --applicationUrl http://loca
 - DB: SQLite file, seeded from `seeds/` directory
 
 ### Key Performance Bottlenecks (by design)
-- Webpack: no minification, no code splitting, no tree shaking, inline source maps
-- Babel targets IE11 (core-js + regenerator-runtime polyfills)
 - Client-side WASM processing: FFmpeg, ImageMagick, web-llm
 - jQuery + lodash full bundles
 - All media processing happens client-side
