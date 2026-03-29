@@ -12,13 +12,15 @@ interface ReturnValues<T> {
 export function useInfiniteFetch<T>(
   apiPath: string,
   fetcher: (apiPath: string) => Promise<T[]>,
+  initialData?: T[],
 ): ReturnValues<T> {
-  const internalRef = useRef({ isLoading: false, offset: 0 });
+  const hasInitialData = initialData != null && initialData.length > 0;
+  const internalRef = useRef({ isLoading: false, offset: hasInitialData ? initialData.length : 0 });
 
   const [result, setResult] = useState<Omit<ReturnValues<T>, "fetchMore">>({
-    data: [],
+    data: hasInitialData ? initialData : [],
     error: null,
-    isLoading: true,
+    isLoading: !hasInitialData,
   });
 
   const fetchMore = useCallback(() => {
@@ -65,7 +67,15 @@ export function useInfiniteFetch<T>(
     );
   }, [apiPath, fetcher]);
 
+  const initialDataUsedRef = useRef(hasInitialData);
+
   useEffect(() => {
+    // Skip the initial fetch if we already have SSR-provided data
+    if (initialDataUsedRef.current) {
+      initialDataUsedRef.current = false;
+      return;
+    }
+
     setResult(() => ({
       data: [],
       error: null,

@@ -1,3 +1,12 @@
+interface InitialData {
+  me: Models.User | null;
+  posts?: Models.Post[];
+}
+
+interface Window {
+  __INITIAL_DATA__?: InitialData;
+}
+
 declare namespace Models {
   interface User {
     createdAt: string;
