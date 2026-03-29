@@ -21,14 +21,6 @@ export default defineConfig({
         find: "@web-speed-hackathon-2026/client",
         replacement: __dirname,
       },
-      {
-        find: /^bayesian-bm25$/,
-        replacement: path.resolve(__dirname, "node_modules/bayesian-bm25/dist/index.js"),
-      },
-      {
-        find: /^kuromoji$/,
-        replacement: path.resolve(__dirname, "node_modules/kuromoji/build/kuromoji.js"),
-      },
     ],
   },
   define: {
