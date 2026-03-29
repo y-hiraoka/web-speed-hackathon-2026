@@ -1,6 +1,6 @@
 import { Router } from "express";
 import httpErrors from "http-errors";
-import { col, where, Op } from "sequelize";
+import { literal, Op } from "sequelize";
 
 import { eventhub } from "@web-speed-hackathon-2026/server/src/eventhub";
 import {
@@ -16,22 +16,88 @@ directMessageRouter.get("/dm", async (req, res) => {
     throw new httpErrors.Unauthorized();
   }
 
-  const conversations = await DirectMessageConversation.scope("withMessages").findAll({
+  // Load conversations (with initiator/member but without messages)
+  // Filter to only those with at least one message via subquery
+  const conversations = await DirectMessageConversation.findAll({
     where: {
       [Op.and]: [
         { [Op.or]: [{ initiatorId: req.session.userId }, { memberId: req.session.userId }] },
-        where(col("messages.id"), { [Op.not]: null }),
+        literal(`(SELECT COUNT(*) FROM DirectMessages WHERE DirectMessages.conversationId = DirectMessageConversation.id) > 0`),
       ],
     },
-    order: [[col("messages.createdAt"), "DESC"]],
   });
 
-  const sorted = conversations.map((c) => ({
-    ...c.toJSON(),
-    messages: c.messages?.reverse(),
-  }));
+  if (conversations.length === 0) {
+    return res.status(200).type("application/json").send([]);
+  }
 
-  return res.status(200).type("application/json").send(sorted);
+  const conversationIds = conversations.map((c) => c.id);
+
+  // Fetch the latest message per conversation
+  const latestMessages = await DirectMessage.findAll({
+    where: {
+      id: {
+        [Op.in]: literal(
+          `(SELECT dm.id FROM DirectMessages dm INNER JOIN (SELECT conversationId, MAX(createdAt) as maxCreatedAt FROM DirectMessages WHERE conversationId IN (${conversationIds.map((id) => `'${id}'`).join(",")}) GROUP BY conversationId) latest ON dm.conversationId = latest.conversationId AND dm.createdAt = latest.maxCreatedAt)`,
+        ),
+      },
+    },
+    include: [
+      { association: "sender", include: [{ association: "profileImage" }] },
+    ],
+  });
+
+  // Fetch one unread message per conversation from the peer (to signal unread status)
+  const unreadMessages = await DirectMessage.findAll({
+    where: {
+      id: {
+        [Op.in]: literal(
+          `(SELECT MIN(dm2.id) FROM DirectMessages dm2 WHERE dm2.conversationId IN (${conversationIds.map((id) => `'${id}'`).join(",")}) AND dm2.senderId != '${req.session.userId}' AND dm2.isRead = 0 GROUP BY dm2.conversationId)`,
+        ),
+      },
+    },
+    include: [
+      { association: "sender", include: [{ association: "profileImage" }] },
+    ],
+  });
+
+  // Build maps
+  const latestMessageMap = new Map<string, (typeof latestMessages)[number]>();
+  for (const msg of latestMessages) {
+    latestMessageMap.set(msg.conversationId, msg);
+  }
+  const unreadMap = new Map<string, (typeof unreadMessages)[number]>();
+  for (const msg of unreadMessages) {
+    unreadMap.set(msg.conversationId, msg);
+  }
+
+  // Assemble the response
+  const result = conversations
+    .map((c) => {
+      const latestMsg = latestMessageMap.get(c.id);
+      if (!latestMsg) return null;
+
+      const messages: object[] = [];
+      const unreadMsg = unreadMap.get(c.id);
+      // Add unread message first (if different from latest) so client can detect unread
+      if (unreadMsg && unreadMsg.id !== latestMsg.id) {
+        messages.push(unreadMsg.toJSON());
+      }
+      messages.push(latestMsg.toJSON());
+
+      return {
+        ...c.toJSON(),
+        messages,
+      };
+    })
+    .filter(Boolean)
+    .sort((a: any, b: any) => {
+      const aTime = new Date(a.messages[a.messages.length - 1].createdAt).getTime();
+      const bTime = new Date(b.messages[b.messages.length - 1].createdAt).getTime();
+      return bTime - aTime;
+    });
+
+  return res.status(200).type("application/json").send(result);
 });
 
 directMessageRouter.post("/dm", async (req, res) => {
