@@ -21,6 +21,7 @@
     "body-parser": "2.2.0",
     "compression": "1.8.1",
     "connect-history-api-fallback": "2.0.0",
+    "exif-reader": "^2.0.3",
     "express": "5.1.0",
     "express-session": "1.18.2",
     "file-type": "21.1.1",
