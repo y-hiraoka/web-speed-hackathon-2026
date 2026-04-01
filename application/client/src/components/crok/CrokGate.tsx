@@ -1,3 +1,5 @@
+import { useCallback } from "react";
+
 import { DocumentTitle } from "@web-speed-hackathon-2026/client/src/components/foundation/DocumentTitle";
 
 interface Props {
@@ -13,6 +15,11 @@ export const CrokGate = ({
   buttonLabel = "サインイン",
   authModalId,
 }: Props) => {
+  const handleClick = useCallback(() => {
+    const target = document.getElementById(authModalId) as HTMLDialogElement | null;
+    if (target && !target.open) target.showModal();
+  }, [authModalId]);
+
   return (
     <>
       <DocumentTitle title="Crok - CaX" />
@@ -22,8 +29,7 @@ export const CrokGate = ({
         <button
           className="bg-cax-brand text-cax-surface-raised hover:bg-cax-brand-strong inline-flex items-center justify-center rounded-full px-6 py-2 shadow"
           type="button"
-          command="show-modal"
-          commandfor={authModalId}
+          onClick={handleClick}
         >
           {buttonLabel}
         </button>

@@ -20,6 +20,11 @@ export const CoveredImage = ({ alt, src, width, height }: Props) => {
     ev.stopPropagation();
   }, []);
 
+  const handleShowAlt = useCallback(() => {
+    const target = document.getElementById(dialogId) as HTMLDialogElement | null;
+    if (target && !target.open) target.showModal();
+  }, [dialogId]);
+
   return (
     <div className="relative h-full w-full overflow-hidden">
       <img
@@ -34,8 +39,7 @@ export const CoveredImage = ({ alt, src, width, height }: Props) => {
       <button
         className="border-cax-border bg-cax-surface-raised/90 text-cax-text-muted hover:bg-cax-surface absolute right-1 bottom-1 rounded-full border px-2 py-1 text-center text-xs"
         type="button"
-        command="show-modal"
-        commandfor={dialogId}
+        onClick={handleShowAlt}
       >
         ALT を表示する
       </button>
