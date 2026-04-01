@@ -4,7 +4,7 @@ import { SubmissionError } from "redux-form";
 import { AuthFormData } from "@web-speed-hackathon-2026/client/src/auth/types";
 import { AuthModalPage } from "@web-speed-hackathon-2026/client/src/components/auth_modal/AuthModalPage";
 import { Modal } from "@web-speed-hackathon-2026/client/src/components/modal/Modal";
-import { sendJSON } from "@web-speed-hackathon-2026/client/src/utils/fetchers";
+import { HttpError, sendJSON } from "@web-speed-hackathon-2026/client/src/utils/fetchers";
 
 interface Props {
   id: string;
@@ -16,14 +16,14 @@ const ERROR_MESSAGES: Record<string, string> = {
   USERNAME_TAKEN: "ユーザー名が使われています",
 };
 
-function getErrorCode(err: JQuery.jqXHR<unknown>, type: "signin" | "signup"): string {
+function getErrorCode(err: HttpError, type: "signin" | "signup"): string {
   const responseJSON = err.responseJSON;
   if (
     typeof responseJSON !== "object" ||
     responseJSON === null ||
     !("code" in responseJSON) ||
-    typeof responseJSON.code !== "string" ||
-    !Object.keys(ERROR_MESSAGES).includes(responseJSON.code)
+    typeof (responseJSON as Record<string, unknown>)["code"] !== "string" ||
+    !Object.keys(ERROR_MESSAGES).includes((responseJSON as Record<string, unknown>)["code"] as string)
   ) {
     if (type === "signup") {
       return "登録に失敗しました";
@@ -32,7 +32,8 @@ function getErrorCode(err: JQuery.jqXHR<unknown>, type: "signin" | "signup"): st
     }
   }
 
-  return ERROR_MESSAGES[responseJSON.code]!;
+  const code = (responseJSON as Record<string, string>)["code"];
+  return ERROR_MESSAGES[code]!;
 }
 
 export const AuthModalContainer = ({ id, onUpdateActiveUser }: Props) => {
@@ -68,7 +69,7 @@ export const AuthModalContainer = ({ id, onUpdateActiveUser }: Props) => {
         }
         handleRequestCloseModal();
       } catch (err: unknown) {
-        const error = getErrorCode(err as JQuery.jqXHR<unknown>, values.type);
+        const error = getErrorCode(err as HttpError, values.type);
         throw new SubmissionError({
           _error: error,
         });
