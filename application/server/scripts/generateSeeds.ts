@@ -1,6 +1,9 @@
-import { createWriteStream } from "node:fs";
+import { createWriteStream, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+
+import ExifReader from "exifreader";
+import sharp from "sharp";
 
 import { faker } from "@faker-js/faker/locale/ja";
 
@@ -178,12 +181,20 @@ function pickRandomN<T>(arr: T[], n: number): T[] {
   return faker.helpers.arrayElements(arr, n);
 }
 
-function generateProfileImages(): ProfileImageSeed[] {
+async function generateProfileImages(): Promise<ProfileImageSeed[]> {
   // Use existing profile image IDs from public/images/profiles/
-  return EXISTING_PROFILE_IMAGE_IDS.map((id) => ({
-    id,
-    alt: "",
-  }));
+  const profileDir = path.resolve(__dirname, "../../public/images/profiles");
+  const results: ProfileImageSeed[] = [];
+  for (const id of EXISTING_PROFILE_IMAGE_IDS) {
+    const jpgPath = path.join(profileDir, `${id}.jpg`);
+    const webpPath = path.join(profileDir, `${id}.webp`);
+    await sharp(jpgPath)
+      .resize({ width: 256, height: 256, fit: "cover" })
+      .webp({ quality: 80 })
+      .toFile(webpPath);
+    results.push({ id, alt: "" });
+  }
+  return results;
 }
 
 function generateUsers(count: number, profileImages: ProfileImageSeed[]): UserSeed[] {
@@ -217,14 +228,53 @@ function generateUsers(count: number, profileImages: ProfileImageSeed[]): UserSe
   return users;
 }
 
-function generateImages(): ImageSeed[] {
+const IMAGE_MAX_LONG_SIDE = 1280;
+
+async function generateImages(): Promise<ImageSeed[]> {
   // Use existing image IDs from public/images/
   const baseTime = now - ONE_WEEK_MS;
-  return EXISTING_IMAGE_IDS.map((id, i) => ({
-    id,
-    alt: "",
-    createdAt: new Date(baseTime + i * 60 * 1000).toISOString(),
-  }));
+  const publicDir = path.resolve(__dirname, "../../public/images");
+
+  const results: ImageSeed[] = [];
+  for (let i = 0; i < EXISTING_IMAGE_IDS.length; i++) {
+    const id = EXISTING_IMAGE_IDS[i]!;
+    const filePath = path.join(publicDir, `${id}.jpg`);
+
+    // EXIF description を先に読み取る（リサイズ前）
+    let alt = "";
+    try {
+      const buf = readFileSync(filePath);
+      const tags = ExifReader.load(buf);
+      const desc = tags["ImageDescription"];
+      if (desc?.description) {
+        alt = desc.description;
+      }
+    } catch {
+      // no EXIF
+    }
+
+    // 長辺を1280pxにリサイズし、WebP品質80で圧縮
+    const webpPath = filePath.replace(/\.jpg$/, ".webp");
+    const resized = await sharp(filePath)
+      .resize({ width: IMAGE_MAX_LONG_SIDE, height: IMAGE_MAX_LONG_SIDE, fit: "inside", withoutEnlargement: true })
+      .webp({ quality: 80 })
+      .toBuffer();
+    await sharp(resized).toFile(webpPath);
+
+    const metadata = await sharp(resized).metadata();
+    const width = metadata.width ?? 0;
+    const height = metadata.height ?? 0;
+
+    results.push({
+      id,
+      alt,
+      width,
+      height,
+      createdAt: new Date(baseTime + i * 60 * 1000).toISOString(),
+    });
+  }
+
+  return results;
 }
 
 function generateMovies(): MovieSeed[] {
@@ -695,13 +745,13 @@ async function main() {
   console.log("Generating seed data...");
 
   console.log("1. Generating ProfileImages (using existing assets)...");
-  const profileImages = generateProfileImages();
+  const profileImages = await generateProfileImages();
 
   console.log("2. Generating Users...");
   const users = generateUsers(CONFIG.USER_COUNT, profileImages);
 
   console.log("3. Generating Images (using existing assets)...");
-  const images = generateImages();
+  const images = await generateImages();
 
   console.log("4. Generating Movies (using existing assets)...");
   const movies = generateMovies();

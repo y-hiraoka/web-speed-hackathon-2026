@@ -36,10 +36,6 @@ export default defineConfig({
       "bayesian-bm25": path.resolve(__dirname, "node_modules/bayesian-bm25/dist/index.js"),
       kuromoji: path.resolve(__dirname, "node_modules/kuromoji/build/kuromoji.js"),
       "@ffmpeg/ffmpeg": path.resolve(__dirname, "node_modules/@ffmpeg/ffmpeg/dist/esm/index.js"),
-      "@imagemagick/magick-wasm/magick.wasm": path.resolve(
-        __dirname,
-        "node_modules/@imagemagick/magick-wasm/dist/magick.wasm",
-      ),
       fs: path.resolve(__dirname, "src/shims/empty-module.ts"),
       path: path.resolve(__dirname, "src/shims/empty-module.ts"),
       url: path.resolve(__dirname, "src/shims/empty-module.ts"),
