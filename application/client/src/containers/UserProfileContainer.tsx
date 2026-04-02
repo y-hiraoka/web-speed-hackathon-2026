@@ -21,7 +21,7 @@ export const UserProfileContainer = () => {
   );
 
   if (isLoadingUser) {
-    return <DocumentTitle title="読込中 - CaX" />;
+    return null;
   }
 
   if (user === null) {

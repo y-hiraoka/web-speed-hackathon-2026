@@ -20,7 +20,7 @@ const PostContainerContent = ({ postId }: { postId: string | undefined }) => {
   );
 
   if (isLoadingPost) {
-    return <DocumentTitle title="読込中 - CaX" />;
+    return null;
   }
 
   if (post === null) {

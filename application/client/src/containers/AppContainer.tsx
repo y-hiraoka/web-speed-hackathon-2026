@@ -2,7 +2,6 @@ import { lazy, Suspense, useCallback, useEffect, useId, useState } from "react";
 import { Route, Routes, useLocation, useNavigate } from "react-router";
 
 import { AppPage } from "@web-speed-hackathon-2026/client/src/components/application/AppPage";
-import { DocumentTitle } from "@web-speed-hackathon-2026/client/src/components/foundation/DocumentTitle";
 import { AuthModalContainer } from "@web-speed-hackathon-2026/client/src/containers/AuthModalContainer";
 import { NotFoundContainer } from "@web-speed-hackathon-2026/client/src/containers/NotFoundContainer";
 import { TimelineContainer } from "@web-speed-hackathon-2026/client/src/containers/TimelineContainer";
@@ -88,7 +87,7 @@ export const AppContainer = () => {
   const newPostModalId = useId();
 
   if (isLoadingActiveUser) {
-    return <DocumentTitle title="読込中 - CaX" />;
+    return null;
   }
 
   return (
