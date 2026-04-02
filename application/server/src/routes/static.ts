@@ -14,6 +14,7 @@ export const staticRouter = Router();
 staticRouter.use(
   serveStatic(UPLOAD_PATH, {
     etag: true,
+    index: false,
     lastModified: true,
     maxAge: "7d",
     immutable: true,
@@ -23,6 +24,7 @@ staticRouter.use(
 staticRouter.use(
   serveStatic(PUBLIC_PATH, {
     etag: true,
+    index: false,
     lastModified: true,
     maxAge: "7d",
   }),
