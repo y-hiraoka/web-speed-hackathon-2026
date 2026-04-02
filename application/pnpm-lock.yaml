@@ -33,9 +33,6 @@ importers:
       classnames:
         specifier: 2.5.1
         version: 2.5.1
-      fast-average-color:
-        specifier: 9.5.0
-        version: 9.5.0
       katex:
         specifier: 0.16.25
         version: 0.16.25
@@ -178,6 +175,9 @@ importers:
       express-session:
         specifier: 1.18.2
         version: 1.18.2
+      fast-average-color:
+        specifier: 9.5.1
+        version: 9.5.1
       file-type:
         specifier: 21.1.1
         version: 21.1.1
@@ -1606,8 +1606,8 @@ packages:
   extend@3.0.2:
     resolution: {integrity: sha512-fjquC59cD7CyW6urNXK0FBufkZcoiGG80wTuPujX590cB5Ttln20E2UB4S/WARVqhXffZl2LNgS+gQdPIIim/g==}
 
-  fast-average-color@9.5.0:
-    resolution: {integrity: sha512-nC6x2YIlJ9xxgkMFMd1BNoM1ctMjNoRKfRliPmiEWW3S6rLTHiQcy9g3pt/xiKv/D0NAAkhb9VyV+WJFvTqMGg==}
+  fast-average-color@9.5.1:
+    resolution: {integrity: sha512-Io8TbYSfS23wKvIotc++0tJKauUT15NuAIx+X9wkNYIRoRmGlIU7yUAYNKbgwnzX0XjCv2kunS6V0JWx9oKkSA==}
     engines: {node: '>= 12'}
 
   fault@1.0.4:
@@ -4109,7 +4109,7 @@ snapshots:
 
   extend@3.0.2: {}
 
-  fast-average-color@9.5.0: {}
+  fast-average-color@9.5.1: {}
 
   fault@1.0.4:
     dependencies:
