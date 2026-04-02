@@ -1,3 +1,4 @@
+import bodyParser from "body-parser";
 import { Router, NextFunction, Request, Response } from "express";
 import httpErrors from "http-errors";
 import { ValidationError } from "sequelize";
@@ -13,6 +14,8 @@ import { searchRouter } from "@web-speed-hackathon-2026/server/src/routes/api/se
 import { soundRouter } from "@web-speed-hackathon-2026/server/src/routes/api/sound";
 import { userRouter } from "@web-speed-hackathon-2026/server/src/routes/api/user";
 
+const rawBodyParser = bodyParser.raw({ limit: "10mb" });
+
 export const apiRouter = Router();
 
 apiRouter.use(initializeRouter);
@@ -20,8 +23,11 @@ apiRouter.use(userRouter);
 apiRouter.use(postRouter);
 apiRouter.use(directMessageRouter);
 apiRouter.use(searchRouter);
+apiRouter.post("/movies", rawBodyParser);
 apiRouter.use(movieRouter);
+apiRouter.post("/images", rawBodyParser);
 apiRouter.use(imageRouter);
+apiRouter.post("/sounds", rawBodyParser);
 apiRouter.use(soundRouter);
 apiRouter.use(authRouter);
 apiRouter.use(crokRouter);
