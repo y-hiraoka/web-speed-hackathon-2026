@@ -33,6 +33,7 @@ staticRouter.use(
 staticRouter.use(
   expressStaticGzip(CLIENT_DIST_PATH, {
     enableBrotli: true,
+    index: false,
     orderPreference: ["br", "gz"],
     serveStatic: {
       etag: true,

@@ -87,7 +87,7 @@ export const PausableMovie = ({ src }: Props) => {
             src={src}
           />
         ) : (
-          <div className="aspect-square w-full bg-cax-surface-subtle" />
+          <div className="bg-cax-surface-subtle aspect-square w-full" />
         )}
         {/* e2e互換用の非表示canvas */}
         <canvas ref={canvasRef} className="hidden" />

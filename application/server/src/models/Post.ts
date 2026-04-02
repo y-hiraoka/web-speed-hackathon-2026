@@ -42,9 +42,7 @@ export function initPost(sequelize: Sequelize) {
     },
     {
       sequelize,
-      indexes: [
-        { fields: ["createdAt"] },
-      ],
+      indexes: [{ fields: ["createdAt"] }],
       defaultScope: {
         attributes: {
           exclude: ["userId", "movieId", "soundId"],

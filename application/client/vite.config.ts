@@ -1,8 +1,8 @@
 import path from "node:path";
 
 import react from "@vitejs/plugin-react";
-import { compression } from "vite-plugin-compression2";
 import { defineConfig } from "vite";
+import { compression } from "vite-plugin-compression2";
 
 const DIST_PATH = path.resolve(__dirname, "../dist");
 
@@ -22,7 +22,11 @@ export default defineConfig({
       output: {
         manualChunks(id: string) {
           if (id.includes("node_modules")) {
-            if (id.includes("/react/") || id.includes("/react-dom/") || id.includes("/react-router/")) {
+            if (
+              id.includes("/react/") ||
+              id.includes("/react-dom/") ||
+              id.includes("/react-router/")
+            ) {
               return "vendor-react";
             }
             if (
@@ -56,6 +60,11 @@ export default defineConfig({
     "process.env.BUILD_DATE": JSON.stringify(new Date().toISOString()),
     "process.env.COMMIT_HASH": JSON.stringify(process.env["SOURCE_VERSION"] || ""),
     "process.env.NODE_ENV": JSON.stringify("production"),
+  },
+  ssr: {
+    // Bundle all dependencies so the SSR entry is self-contained
+    // and can be imported from any location (e.g. ../dist/server/)
+    noExternal: true,
   },
   server: {
     port: 8080,

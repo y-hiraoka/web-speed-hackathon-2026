@@ -74,7 +74,10 @@ searchRouter.get("/search", async (req, res) => {
 
   const DEFAULT_LIMIT = 30;
   const MAX_LIMIT = 100;
-  const limit = Math.min(req.query["limit"] != null ? Number(req.query["limit"]) : DEFAULT_LIMIT, MAX_LIMIT);
+  const limit = Math.min(
+    req.query["limit"] != null ? Number(req.query["limit"]) : DEFAULT_LIMIT,
+    MAX_LIMIT,
+  );
   const offset = req.query["offset"] != null ? Number(req.query["offset"]) : 0;
 
   // Build a single raw SQL query that uses FTS5 for keyword matching
