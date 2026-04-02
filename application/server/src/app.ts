@@ -19,7 +19,7 @@ app.use(
   }),
 );
 app.use(sessionMiddleware);
-app.use(bodyParser.json());
+app.use(bodyParser.json({ limit: "1mb" }));
 
 app.use("/api/v1", apiRouter);
 app.use(staticRouter);
