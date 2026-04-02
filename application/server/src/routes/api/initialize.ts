@@ -12,8 +12,8 @@ initializeRouter.post("/initialize", async (_req, res) => {
   // DBリセット
   await initializeSequelize();
   // cookie-session はサーバー側にストアを持たないためクリア不要
-  // uploadディレクトリをクリア
-  await fs.rm(UPLOAD_PATH, { force: true, recursive: true });
+  // uploadディレクトリをクリア（レスポンスをブロックしないよう非同期で実行）
+  fs.rm(UPLOAD_PATH, { force: true, recursive: true }).catch(() => {});
 
   return res.status(200).type("application/json").send({});
 });
