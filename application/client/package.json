@@ -2,9 +2,11 @@
   "name": "@web-speed-hackathon-2026/client",
   "version": "0.0.1",
   "private": true,
+  "type": "module",
   "license": "MPL-2.0",
   "author": "CyberAgent, Inc.",
   "scripts": {
+    "analyze": "ANALYZE=true vite build",
     "build": "vite build",
     "dev": "vite",
     "typecheck": "tsc"
@@ -48,6 +50,7 @@
     "@vitejs/plugin-react": "6.0.1",
     "babel-plugin-react-compiler": "1.0.0",
     "react-markdown": "10.1.0",
+    "rollup-plugin-visualizer": "7.0.1",
     "tailwindcss": "4.2.1",
     "typescript": "5.9.3",
     "vite": "8.0.3"
