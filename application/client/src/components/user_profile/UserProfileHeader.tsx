@@ -33,6 +33,7 @@ export const UserProfileHeader = ({ user }: Props) => {
         <img
           alt=""
           crossOrigin="anonymous"
+          decoding="async"
           height={128}
           loading="lazy"
           onLoad={handleLoadImage}

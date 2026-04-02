@@ -40,7 +40,9 @@ export const AccountMenu = ({ user, onLogout }: Props) => {
         <img
           alt={user.profileImage.alt}
           className="h-10 w-10 shrink-0 rounded-full object-cover"
+          decoding="async"
           height={40}
+          loading="lazy"
           src={getProfileImagePath(user.profileImage.id)}
           width={40}
         />

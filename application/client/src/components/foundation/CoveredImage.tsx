@@ -30,6 +30,7 @@ export const CoveredImage = ({ alt, src, width, height }: Props) => {
       <img
         alt={alt}
         className="absolute top-1/2 left-1/2 h-full w-full -translate-x-1/2 -translate-y-1/2 object-cover"
+        decoding="async"
         height={height}
         loading="lazy"
         src={src}

@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { AspectRatioBox } from "@web-speed-hackathon-2026/client/src/components/foundation/AspectRatioBox";
 import { FontAwesomeIcon } from "@web-speed-hackathon-2026/client/src/components/foundation/FontAwesomeIcon";
@@ -13,11 +13,31 @@ interface Props {
 export const PausableMovie = ({ src }: Props) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const containerRef = useRef<HTMLButtonElement>(null);
   const [isPlaying, setIsPlaying] = useState(true);
+  const [isVisible, setIsVisible] = useState(false);
 
   // prefers-reduced-motion に対応
   const reducedMotion =
     typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // Lazy load: only load the video when it enters the viewport
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) {
+          setIsVisible(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "200px" },
+    );
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, []);
 
   const handleLoadedMetadata = useCallback(() => {
     const video = videoRef.current;
@@ -48,22 +68,27 @@ export const PausableMovie = ({ src }: Props) => {
   return (
     <AspectRatioBox aspectHeight={1} aspectWidth={1}>
       <button
+        ref={containerRef}
         aria-label="動画プレイヤー"
         className="group relative block h-full w-full"
         onClick={handleClick}
         type="button"
       >
-        <video
-          ref={videoRef}
-          autoPlay
-          className="aspect-square w-full object-cover"
-          loop
-          muted
-          onLoadedMetadata={handleLoadedMetadata}
-          playsInline
-          preload="metadata"
-          src={src}
-        />
+        {isVisible ? (
+          <video
+            ref={videoRef}
+            autoPlay
+            className="aspect-square w-full object-cover"
+            loop
+            muted
+            onLoadedMetadata={handleLoadedMetadata}
+            playsInline
+            preload="metadata"
+            src={src}
+          />
+        ) : (
+          <div className="aspect-square w-full bg-cax-surface-subtle" />
+        )}
         {/* e2e互換用の非表示canvas */}
         <canvas ref={canvasRef} className="hidden" />
         <div
