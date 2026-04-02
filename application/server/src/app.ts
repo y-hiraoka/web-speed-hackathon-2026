@@ -1,3 +1,5 @@
+import zlib from "node:zlib";
+
 import bodyParser from "body-parser";
 import compression from "compression";
 import Express from "express";
@@ -10,7 +12,12 @@ export const app = Express();
 
 app.set("trust proxy", true);
 
-app.use(compression());
+app.use(
+  compression({
+    level: zlib.constants.Z_DEFAULT_COMPRESSION,
+    threshold: 256,
+  }),
+);
 app.use(sessionMiddleware);
 app.use(bodyParser.json());
 app.use(bodyParser.raw({ limit: "10mb" }));

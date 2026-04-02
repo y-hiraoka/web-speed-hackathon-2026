@@ -1,13 +1,18 @@
 import path from "node:path";
 
 import react from "@vitejs/plugin-react";
+import { compression } from "vite-plugin-compression2";
 import { defineConfig } from "vite";
 
 const DIST_PATH = path.resolve(__dirname, "../dist");
 
 export default defineConfig({
   root: __dirname,
-  plugins: [react()],
+  plugins: [
+    react(),
+    compression({ algorithm: "gzip", exclude: [/\.(br|gz)$/] }),
+    compression({ algorithm: "brotliCompress", exclude: [/\.(br|gz)$/] }),
+  ],
   build: {
     outDir: DIST_PATH,
     emptyOutDir: true,

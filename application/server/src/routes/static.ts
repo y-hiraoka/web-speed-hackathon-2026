@@ -1,4 +1,5 @@
 import { Router } from "express";
+import expressStaticGzip from "express-static-gzip";
 import serveStatic from "serve-static";
 
 import {
@@ -28,17 +29,21 @@ staticRouter.use(
 );
 
 staticRouter.use(
-  serveStatic(CLIENT_DIST_PATH, {
-    etag: true,
-    index: false,
-    lastModified: true,
-    setHeaders(res, filePath) {
-      // Vite outputs hashed filenames in the assets directory — cache them immutably
-      if (filePath.includes("/assets/")) {
-        res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
-      } else {
-        res.setHeader("Cache-Control", "public, max-age=0, must-revalidate");
-      }
+  expressStaticGzip(CLIENT_DIST_PATH, {
+    enableBrotli: true,
+    orderPreference: ["br", "gz"],
+    serveStatic: {
+      etag: true,
+      index: false,
+      lastModified: true,
+      setHeaders(res, filePath) {
+        // Vite outputs hashed filenames in the assets directory — cache them immutably
+        if (filePath.includes("/assets/")) {
+          res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+        } else {
+          res.setHeader("Cache-Control", "public, max-age=0, must-revalidate");
+        }
+      },
     },
   }),
 );
