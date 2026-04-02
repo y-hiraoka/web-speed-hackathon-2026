@@ -30,6 +30,7 @@ export default defineConfig({
       "/images": "http://localhost:3000",
       "/movies": "http://localhost:3000",
       "/sounds": "http://localhost:3000",
+      "/sprites": "http://localhost:3000",
     },
   },
 
