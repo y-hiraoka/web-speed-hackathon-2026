@@ -72,8 +72,10 @@ searchRouter.get("/search", async (req, res) => {
     return res.status(200).type("application/json").send([]);
   }
 
-  const limit = req.query["limit"] != null ? Number(req.query["limit"]) : undefined;
-  const offset = req.query["offset"] != null ? Number(req.query["offset"]) : undefined;
+  const DEFAULT_LIMIT = 30;
+  const MAX_LIMIT = 100;
+  const limit = Math.min(req.query["limit"] != null ? Number(req.query["limit"]) : DEFAULT_LIMIT, MAX_LIMIT);
+  const offset = req.query["offset"] != null ? Number(req.query["offset"]) : 0;
 
   // Build a single raw SQL query that uses FTS5 for keyword matching
   // and combines text search + user name search via UNION
@@ -134,12 +136,12 @@ searchRouter.get("/search", async (req, res) => {
     SELECT sub.id FROM (${idQuery}) sub
     INNER JOIN Posts p2 ON p2.id = sub.id
     ORDER BY p2.createdAt DESC
-    ${limit != null ? "LIMIT :limit" : ""}
-    ${offset != null ? "OFFSET :offset" : ""}
+    LIMIT :limit
+    OFFSET :offset
   `;
 
-  if (limit != null) replacements["limit"] = limit;
-  if (offset != null) replacements["offset"] = offset;
+  replacements["limit"] = limit;
+  replacements["offset"] = offset;
 
   const sequelize = Post.sequelize!;
   const rows = (await sequelize.query(fullQuery, {

@@ -3,12 +3,15 @@ import httpErrors from "http-errors";
 
 import { Comment, Post } from "@web-speed-hackathon-2026/server/src/models";
 
+const DEFAULT_LIMIT = 30;
+const MAX_LIMIT = 100;
+
 export const postRouter = Router();
 
 postRouter.get("/posts", async (req, res) => {
   const posts = await Post.findAll({
-    limit: req.query["limit"] != null ? Number(req.query["limit"]) : undefined,
-    offset: req.query["offset"] != null ? Number(req.query["offset"]) : undefined,
+    limit: Math.min(req.query["limit"] != null ? Number(req.query["limit"]) : DEFAULT_LIMIT, MAX_LIMIT),
+    offset: req.query["offset"] != null ? Number(req.query["offset"]) : 0,
     order: [["createdAt", "DESC"]],
   });
 
@@ -27,8 +30,8 @@ postRouter.get("/posts/:postId", async (req, res) => {
 
 postRouter.get("/posts/:postId/comments", async (req, res) => {
   const posts = await Comment.findAll({
-    limit: req.query["limit"] != null ? Number(req.query["limit"]) : undefined,
-    offset: req.query["offset"] != null ? Number(req.query["offset"]) : undefined,
+    limit: Math.min(req.query["limit"] != null ? Number(req.query["limit"]) : DEFAULT_LIMIT, MAX_LIMIT),
+    offset: req.query["offset"] != null ? Number(req.query["offset"]) : 0,
     where: {
       postId: req.params.postId,
     },
