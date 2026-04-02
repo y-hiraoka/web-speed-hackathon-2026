@@ -52,20 +52,6 @@ export function initDirectMessageConversation(sequelize: Sequelize) {
           { association: "member", include: [{ association: "profileImage" }] },
         ],
       },
-      scopes: {
-        withMessages: {
-          include: [
-            { association: "initiator", include: [{ association: "profileImage" }] },
-            { association: "member", include: [{ association: "profileImage" }] },
-            {
-              association: "messages",
-              include: [{ association: "sender", include: [{ association: "profileImage" }] }],
-              order: [["createdAt", "ASC"]],
-              required: false,
-            },
-          ],
-        },
-      },
     },
   );
 }

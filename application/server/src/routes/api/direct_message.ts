@@ -108,7 +108,7 @@ directMessageRouter.post("/dm", async (req, res) => {
     throw new httpErrors.NotFound();
   }
 
-  const [conversation] = await DirectMessageConversation.scope("withMessages").findOrCreate({
+  const [conversation] = await DirectMessageConversation.findOrCreate({
     where: {
       [Op.or]: [
         { initiatorId: req.session.userId, memberId: peer.id },
@@ -119,17 +119,6 @@ directMessageRouter.post("/dm", async (req, res) => {
       initiatorId: req.session.userId,
       memberId: peer.id,
     },
-  });
-  await conversation.reload({
-    include: [
-      { association: "initiator", include: [{ association: "profileImage" }] },
-      { association: "member", include: [{ association: "profileImage" }] },
-      {
-        association: "messages",
-        include: [{ association: "sender", include: [{ association: "profileImage" }] }],
-        required: false,
-      },
-    ],
   });
 
   return res.status(200).type("application/json").send(conversation);
@@ -192,7 +181,7 @@ directMessageRouter.get("/dm/:conversationId", async (req, res) => {
     throw new httpErrors.Unauthorized();
   }
 
-  const conversation = await DirectMessageConversation.scope("withMessages").findOne({
+  const conversation = await DirectMessageConversation.findOne({
     where: {
       id: req.params.conversationId,
       [Op.or]: [{ initiatorId: req.session.userId }, { memberId: req.session.userId }],
@@ -202,7 +191,19 @@ directMessageRouter.get("/dm/:conversationId", async (req, res) => {
     throw new httpErrors.NotFound();
   }
 
-  return res.status(200).type("application/json").send(conversation);
+  const messages = await DirectMessage.findAll({
+    where: { conversationId: conversation.id },
+    include: [{ association: "sender", include: [{ association: "profileImage" }] }],
+    order: [["createdAt", "ASC"]],
+    limit: 100,
+  });
+
+  const result = {
+    ...conversation.toJSON(),
+    messages: messages.map((m) => m.toJSON()),
+  };
+
+  return res.status(200).type("application/json").send(result);
 });
 
 directMessageRouter.ws("/dm/:conversationId", async (req, _res) => {
