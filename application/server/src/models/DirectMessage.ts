@@ -4,6 +4,7 @@ import {
   ForeignKey,
   InferAttributes,
   InferCreationAttributes,
+  literal,
   Model,
   NonAttribute,
   Op,
@@ -29,6 +30,24 @@ export class DirectMessage extends Model<
 
   declare sender?: NonAttribute<User>;
   declare conversation?: NonAttribute<DirectMessageConversation>;
+}
+
+/**
+ * Count unread DMs for a user using a subquery instead of a JOIN.
+ * This avoids the expensive include-based COUNT that Sequelize generates.
+ */
+export async function countUnreadDMs(userId: string): Promise<number> {
+  return DirectMessage.count({
+    where: {
+      senderId: { [Op.ne]: userId },
+      isRead: false,
+      conversationId: {
+        [Op.in]: literal(
+          `(SELECT id FROM DirectMessageConversations WHERE initiatorId = '${userId}' OR memberId = '${userId}')`,
+        ),
+      },
+    },
+  });
 }
 
 export function initDirectMessage(sequelize: Sequelize) {
@@ -93,22 +112,7 @@ export function initDirectMessage(sequelize: Sequelize) {
         ? conversation.memberId
         : conversation.initiatorId;
 
-    const unreadCount = await DirectMessage.count({
-      where: {
-        senderId: { [Op.ne]: receiverId },
-        isRead: false,
-      },
-      include: [
-        {
-          association: "conversation",
-          attributes: [],
-          where: {
-            [Op.or]: [{ initiatorId: receiverId }, { memberId: receiverId }],
-          },
-          required: true,
-        },
-      ],
-    });
+    const unreadCount = await countUnreadDMs(receiverId);
 
     eventhub.emit(`dm:conversation/${conversation.id}:message`, directMessage);
     eventhub.emit(`dm:unread/${receiverId}`, { unreadCount });

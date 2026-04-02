@@ -8,6 +8,7 @@ import {
   DirectMessageConversation,
   User,
 } from "@web-speed-hackathon-2026/server/src/models";
+import { countUnreadDMs } from "@web-speed-hackathon-2026/server/src/models/DirectMessage";
 
 export const directMessageRouter = Router();
 
@@ -156,22 +157,7 @@ directMessageRouter.ws("/dm/unread", async (req, _res) => {
   req.ws.on("close", cleanup);
   req.ws.on("error", cleanup);
 
-  const unreadCount = await DirectMessage.count({
-    distinct: true,
-    where: {
-      senderId: { [Op.ne]: req.session.userId },
-      isRead: false,
-    },
-    include: [
-      {
-        association: "conversation",
-        where: {
-          [Op.or]: [{ initiatorId: req.session.userId }, { memberId: req.session.userId }],
-        },
-        required: true,
-      },
-    ],
-  });
+  const unreadCount = await countUnreadDMs(req.session.userId);
 
   eventhub.emit(`dm:unread/${req.session.userId}`, { unreadCount });
 });
@@ -320,22 +306,7 @@ directMessageRouter.post("/dm/:conversationId/read", async (req, res) => {
 
   if (affectedCount > 0) {
     // Notify once after bulk update instead of per-row via individualHooks
-    const unreadCount = await DirectMessage.count({
-      where: {
-        senderId: { [Op.ne]: req.session.userId },
-        isRead: false,
-      },
-      include: [
-        {
-          association: "conversation",
-          attributes: [],
-          where: {
-            [Op.or]: [{ initiatorId: req.session.userId }, { memberId: req.session.userId }],
-          },
-          required: true,
-        },
-      ],
-    });
+    const unreadCount = await countUnreadDMs(req.session.userId);
 
     eventhub.emit(`dm:unread/${req.session.userId}`, { unreadCount });
   }
