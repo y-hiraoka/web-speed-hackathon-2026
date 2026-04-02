@@ -50,7 +50,11 @@ export const UserProfileHeader = ({ user }: Props) => {
           </span>
           <span>
             <time dateTime={new Date(user.createdAt).toISOString()}>
-              {new Intl.DateTimeFormat("ja", { year: "numeric", month: "long", day: "numeric" }).format(new Date(user.createdAt))}
+              {new Intl.DateTimeFormat("ja", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              }).format(new Date(user.createdAt))}
             </time>
             からサービスを利用しています
           </span>

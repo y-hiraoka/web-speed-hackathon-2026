@@ -44,7 +44,11 @@ export const CommentItem = ({ comment }: Props) => {
           </div>
           <p className="text-cax-text-muted pt-1 text-xs">
             <time dateTime={new Date(comment.createdAt).toISOString()}>
-              {new Intl.DateTimeFormat("ja", { year: "numeric", month: "long", day: "numeric" }).format(new Date(comment.createdAt))}
+              {new Intl.DateTimeFormat("ja", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              }).format(new Date(comment.createdAt))}
             </time>
           </p>
         </div>

@@ -3,7 +3,9 @@ import { lazy, Suspense } from "react";
 import { TypingIndicator } from "@web-speed-hackathon-2026/client/src/components/crok/TypingIndicator";
 import { CrokLogo } from "@web-speed-hackathon-2026/client/src/components/foundation/CrokLogo";
 
-const LazyMarkdownRenderer = lazy(() => import("@web-speed-hackathon-2026/client/src/components/crok/MarkdownRenderer"));
+const LazyMarkdownRenderer = lazy(
+  () => import("@web-speed-hackathon-2026/client/src/components/crok/MarkdownRenderer"),
+);
 
 interface Props {
   message: Models.ChatMessage;

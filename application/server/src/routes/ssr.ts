@@ -3,8 +3,8 @@ import path from "node:path";
 
 import { Router } from "express";
 
-import { CLIENT_DIST_PATH } from "@web-speed-hackathon-2026/server/src/paths";
 import { Post, User } from "@web-speed-hackathon-2026/server/src/models";
+import { CLIENT_DIST_PATH } from "@web-speed-hackathon-2026/server/src/paths";
 
 export const ssrRouter = Router();
 

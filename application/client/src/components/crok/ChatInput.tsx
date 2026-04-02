@@ -96,9 +96,10 @@ export const ChatInput = ({ isStreaming, onSendMessage }: Props) => {
         return;
       }
 
-      const { suggestions: results, queryTokens: tokens } = await fetchJSON<{ suggestions: string[]; queryTokens?: string[] }>(
-        `/api/v1/crok/suggestions?q=${encodeURIComponent(inputValue)}`,
-      );
+      const { suggestions: results, queryTokens: tokens } = await fetchJSON<{
+        suggestions: string[];
+        queryTokens?: string[];
+      }>(`/api/v1/crok/suggestions?q=${encodeURIComponent(inputValue)}`);
       if (cancelled) {
         return;
       }

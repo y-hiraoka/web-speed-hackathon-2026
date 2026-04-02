@@ -127,16 +127,20 @@ export const DirectMessagePage = ({
 
             return (
               <li
-                className={`flex flex-col w-full ${isActiveUserSend ? "items-end" : "items-start"}`}
+                className={`flex w-full flex-col ${isActiveUserSend ? "items-end" : "items-start"}`}
               >
                 <p
-                  className={`max-w-3/4 rounded-xl border px-4 py-2 text-sm whitespace-pre-wrap leading-relaxed wrap-anywhere ${isActiveUserSend ? "rounded-br-sm border-transparent bg-cax-brand text-cax-surface-raised" : "rounded-bl-sm border-cax-border bg-cax-surface text-cax-text"}`}
+                  className={`max-w-3/4 rounded-xl border px-4 py-2 text-sm leading-relaxed wrap-anywhere whitespace-pre-wrap ${isActiveUserSend ? "bg-cax-brand text-cax-surface-raised rounded-br-sm border-transparent" : "border-cax-border bg-cax-surface text-cax-text rounded-bl-sm"}`}
                 >
                   {message.body}
                 </p>
                 <div className="flex gap-1 text-xs">
                   <time dateTime={message.createdAt}>
-                    {new Intl.DateTimeFormat("ja", { hour: "2-digit", minute: "2-digit", hour12: false }).format(new Date(message.createdAt))}
+                    {new Intl.DateTimeFormat("ja", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      hour12: false,
+                    }).format(new Date(message.createdAt))}
                   </time>
                   {isActiveUserSend && message.isRead && (
                     <span className="text-cax-text-muted">既読</span>

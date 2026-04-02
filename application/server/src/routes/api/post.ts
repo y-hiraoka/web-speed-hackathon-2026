@@ -58,5 +58,10 @@ postRouter.post("/posts", async (req, res) => {
     },
   );
 
+  // Keep FTS5 index in sync with new posts
+  await Post.sequelize!.query("INSERT INTO posts_fts(id, text) VALUES (:id, :text)", {
+    replacements: { id: post.id, text: post.text },
+  });
+
   return res.status(200).type("application/json").send(post);
 });

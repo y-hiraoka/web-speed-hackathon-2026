@@ -6,7 +6,11 @@ import { fetchJSON } from "@web-speed-hackathon-2026/client/src/utils/fetchers";
 
 export const TimelineContainer = () => {
   const initialPosts = window.__INITIAL_DATA__?.posts;
-  const { data: posts, fetchMore } = useInfiniteFetch<Models.Post>("/api/v1/posts", fetchJSON, initialPosts);
+  const { data: posts, fetchMore } = useInfiniteFetch<Models.Post>(
+    "/api/v1/posts",
+    fetchJSON,
+    initialPosts,
+  );
 
   return (
     <InfiniteScroll fetchMore={fetchMore} items={posts}>

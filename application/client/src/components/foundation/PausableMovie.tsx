@@ -56,7 +56,7 @@ export const PausableMovie = ({ src }: Props) => {
         <video
           ref={videoRef}
           autoPlay
-          className="w-full aspect-square object-cover"
+          className="aspect-square w-full object-cover"
           loop
           muted
           onLoadedMetadata={handleLoadedMetadata}
@@ -67,7 +67,7 @@ export const PausableMovie = ({ src }: Props) => {
         {/* e2e互換用の非表示canvas */}
         <canvas ref={canvasRef} className="hidden" />
         <div
-          className={`absolute left-1/2 top-1/2 flex items-center justify-center w-16 h-16 text-cax-surface-raised text-3xl bg-cax-overlay/50 rounded-full -translate-x-1/2 -translate-y-1/2 ${isPlaying ? "opacity-0 group-hover:opacity-100" : ""}`}
+          className={`text-cax-surface-raised bg-cax-overlay/50 absolute top-1/2 left-1/2 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full text-3xl ${isPlaying ? "opacity-0 group-hover:opacity-100" : ""}`}
         >
           <FontAwesomeIcon iconType={isPlaying ? "pause" : "play"} styleType="solid" />
         </div>

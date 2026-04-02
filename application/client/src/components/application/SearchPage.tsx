@@ -40,7 +40,9 @@ export const SearchPage = ({ query, results, initialValues }: Props) => {
     }
 
     let isMounted = true;
-    fetchJSON<{ label: string }>(`/api/v1/search/sentiment?text=${encodeURIComponent(parsed.keywords)}`)
+    fetchJSON<{ label: string }>(
+      `/api/v1/search/sentiment?text=${encodeURIComponent(parsed.keywords)}`,
+    )
       .then((result) => {
         if (isMounted) {
           setIsNegative(result.label === "negative");

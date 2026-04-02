@@ -12,7 +12,7 @@ export const AttachFileInputButton = ({ accept, active, icon, label, onChange }:
   return (
     <label className="focus-within:outline-cax-brand relative flex cursor-pointer items-center justify-center overflow-hidden rounded-full focus-within:outline-2 focus-within:outline-offset-2">
       <span
-        className={`flex items-center justify-center w-12 h-12 ${active ? "bg-cax-brand-soft" : "bg-cax-surface-subtle"}`}
+        className={`flex h-12 w-12 items-center justify-center ${active ? "bg-cax-brand-soft" : "bg-cax-surface-subtle"}`}
       >
         {icon}
       </span>

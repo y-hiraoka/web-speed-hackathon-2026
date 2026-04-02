@@ -5,9 +5,9 @@ import { Router } from "express";
 import type { Tokenizer, IpadicFeatures } from "kuromoji";
 import kuromoji from "kuromoji";
 import analyze from "negaposi-analyzer-ja";
-import { Op } from "sequelize";
+import { Op, QueryTypes } from "sequelize";
 
-import { Post, User } from "@web-speed-hackathon-2026/server/src/models";
+import { Post } from "@web-speed-hackathon-2026/server/src/models";
 import { parseSearchQuery } from "@web-speed-hackathon-2026/server/src/utils/parse_search_query.js";
 
 export const searchRouter = Router();
@@ -18,7 +18,9 @@ let tokenizerPromise: Promise<Tokenizer<IpadicFeatures>> | null = null;
 function getTokenizer(): Promise<Tokenizer<IpadicFeatures>> {
   if (!tokenizerPromise) {
     const dicPath = path.resolve("node_modules/kuromoji/dict");
-    const builder = Bluebird.promisifyAll(kuromoji.builder({ dicPath })) as ReturnType<typeof kuromoji.builder> & { buildAsync: () => Promise<Tokenizer<IpadicFeatures>> };
+    const builder = Bluebird.promisifyAll(kuromoji.builder({ dicPath })) as ReturnType<
+      typeof kuromoji.builder
+    > & { buildAsync: () => Promise<Tokenizer<IpadicFeatures>> };
     tokenizerPromise = builder.buildAsync();
   }
   return tokenizerPromise;
@@ -47,6 +49,15 @@ searchRouter.get("/search/sentiment", async (req, res) => {
   return res.status(200).json({ score, label });
 });
 
+/**
+ * Escape special FTS5 characters in a search term.
+ * Wraps the term in double-quotes so that punctuation and operators are treated as literals.
+ */
+function fts5Escape(term: string): string {
+  // Double-quote escaping: replace " with "" inside, then wrap in quotes
+  return '"' + term.replace(/"/g, '""') + '"';
+}
+
 searchRouter.get("/search", async (req, res) => {
   const query = req.query["q"];
 
@@ -61,57 +72,91 @@ searchRouter.get("/search", async (req, res) => {
     return res.status(200).type("application/json").send([]);
   }
 
-  const searchTerm = keywords ? `%${keywords}%` : null;
   const limit = req.query["limit"] != null ? Number(req.query["limit"]) : undefined;
   const offset = req.query["offset"] != null ? Number(req.query["offset"]) : undefined;
 
-  // 日付条件を構築
-  const dateConditions: Record<symbol, Date>[] = [];
+  // Build a single raw SQL query that uses FTS5 for keyword matching
+  // and combines text search + user name search via UNION
+  const whereClauses: string[] = [];
+  const replacements: Record<string, string | number> = {};
+
   if (sinceDate) {
-    dateConditions.push({ [Op.gte]: sinceDate });
+    whereClauses.push("p.createdAt >= :sinceDate");
+    replacements["sinceDate"] = sinceDate.toISOString();
   }
   if (untilDate) {
-    dateConditions.push({ [Op.lte]: untilDate });
+    whereClauses.push("p.createdAt <= :untilDate");
+    replacements["untilDate"] = untilDate.toISOString();
   }
-  const dateWhere =
-    dateConditions.length > 0 ? { createdAt: Object.assign({}, ...dateConditions) } : {};
 
-  // Build OR conditions for a single query instead of multiple full-table scans
-  const orConditions: any[] = [];
+  const dateFilter = whereClauses.length > 0 ? " AND " + whereClauses.join(" AND ") : "";
 
-  if (searchTerm) {
-    // テキスト検索
-    orConditions.push({ ...dateWhere, text: { [Op.like]: searchTerm } });
+  let idQuery: string;
 
-    // ユーザー名・表示名検索
-    const matchingUsers = await User.findAll({
-      attributes: ["id"],
-      where: {
-        [Op.or]: [
-          { username: { [Op.like]: searchTerm } },
-          { name: { [Op.like]: searchTerm } },
-        ],
-      },
-    });
-    if (matchingUsers.length > 0) {
-      const userIds = matchingUsers.map((u) => u.id);
-      orConditions.push({ ...dateWhere, userId: { [Op.in]: userIds } });
+  if (keywords) {
+    // FTS5 trigram tokenizer requires at least 3 characters for MATCH
+    const useFts = keywords.length >= 3;
+
+    if (useFts) {
+      const escapedTerm = fts5Escape(keywords);
+      replacements["ftsKeyword"] = escapedTerm;
+
+      // Use FTS5 MATCH for both post text and user name/username searches
+      // Combine via UNION to get distinct post IDs in a single query
+      idQuery = `
+        SELECT p.id FROM Posts p
+          INNER JOIN posts_fts pf ON pf.id = p.id
+          WHERE pf.text MATCH :ftsKeyword${dateFilter}
+        UNION
+        SELECT p.id FROM Posts p
+          INNER JOIN users_fts uf ON uf.id = p.userId
+          WHERE (uf.username MATCH :ftsKeyword OR uf.name MATCH :ftsKeyword)${dateFilter}
+      `;
+    } else {
+      // Short keywords: fall back to LIKE (rare case, small perf impact)
+      replacements["likeTerm"] = `%${keywords}%`;
+      idQuery = `
+        SELECT p.id FROM Posts p
+          WHERE p.text LIKE :likeTerm${dateFilter}
+        UNION
+        SELECT p.id FROM Posts p
+          INNER JOIN Users u ON u.id = p.userId
+          WHERE (u.username LIKE :likeTerm OR u.name LIKE :likeTerm)${dateFilter}
+      `;
     }
-  } else if (sinceDate || untilDate) {
-    // 日付のみ指定の場合
-    orConditions.push(dateWhere);
+  } else {
+    // Date-only filter
+    idQuery = `SELECT p.id FROM Posts p WHERE 1=1${dateFilter}`;
   }
 
-  if (orConditions.length === 0) {
+  // Add ordering and pagination at the SQL level
+  const fullQuery = `
+    SELECT sub.id FROM (${idQuery}) sub
+    INNER JOIN Posts p2 ON p2.id = sub.id
+    ORDER BY p2.createdAt DESC
+    ${limit != null ? "LIMIT :limit" : ""}
+    ${offset != null ? "OFFSET :offset" : ""}
+  `;
+
+  if (limit != null) replacements["limit"] = limit;
+  if (offset != null) replacements["offset"] = offset;
+
+  const sequelize = Post.sequelize!;
+  const rows = (await sequelize.query(fullQuery, {
+    replacements,
+    type: QueryTypes.SELECT,
+  })) as { id: string }[];
+
+  if (rows.length === 0) {
     return res.status(200).type("application/json").send([]);
   }
 
-  // Single query with DB-level pagination
+  const postIds = rows.map((r) => r.id);
+
+  // Fetch full Post objects with associations using Sequelize default scope
   const result = await Post.findAll({
-    where: { [Op.or]: orConditions },
+    where: { id: { [Op.in]: postIds } },
     order: [["createdAt", "DESC"]],
-    limit,
-    offset,
   });
 
   return res.status(200).type("application/json").send(result);

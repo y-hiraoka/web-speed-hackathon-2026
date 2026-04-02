@@ -7,9 +7,7 @@ const DIST_PATH = path.resolve(__dirname, "../dist");
 
 export default defineConfig({
   root: __dirname,
-  plugins: [
-    react(),
-  ],
+  plugins: [react()],
   build: {
     outDir: DIST_PATH,
     emptyOutDir: true,

@@ -24,12 +24,18 @@ async function computeWaveform(soundFilePath: string): Promise<{ max: number; pe
   const { stdout } = await execFileAsync(
     "ffmpeg",
     [
-      "-i", soundFilePath,
-      "-f", "s16le",
-      "-acodec", "pcm_s16le",
-      "-ac", "1",
-      "-ar", "8000",
-      "-v", "quiet",
+      "-i",
+      soundFilePath,
+      "-f",
+      "s16le",
+      "-acodec",
+      "pcm_s16le",
+      "-ac",
+      "1",
+      "-ar",
+      "8000",
+      "-v",
+      "quiet",
       "pipe:1",
     ],
     { encoding: "buffer", maxBuffer: 50 * 1024 * 1024 },
@@ -122,16 +128,12 @@ soundRouter.post("/sounds", async (req, res) => {
     try {
       await fs.writeFile(tmpInput, req.body);
       const metadataArgs = [
-        "-metadata", `artist=${artist ?? "Unknown Artist"}`,
-        "-metadata", `title=${title ?? "Unknown Title"}`,
+        "-metadata",
+        `artist=${artist ?? "Unknown Artist"}`,
+        "-metadata",
+        `title=${title ?? "Unknown Title"}`,
       ];
-      await execFileAsync("ffmpeg", [
-        "-i", tmpInput,
-        ...metadataArgs,
-        "-vn",
-        "-y",
-        outputPath,
-      ]);
+      await execFileAsync("ffmpeg", ["-i", tmpInput, ...metadataArgs, "-vn", "-y", outputPath]);
     } finally {
       await fs.unlink(tmpInput).catch(() => {});
     }

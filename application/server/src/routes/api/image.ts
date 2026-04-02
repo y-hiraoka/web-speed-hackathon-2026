@@ -16,7 +16,8 @@ function extractAltFromExif(metadata: sharp.Metadata): string {
     try {
       const exif = exifReader(metadata.exif);
       const exifAny = exif as unknown as Record<string, Record<string, unknown>>;
-      const raw = exifAny?.["Image"]?.["ImageDescription"] ?? exifAny?.["image"]?.["ImageDescription"];
+      const raw =
+        exifAny?.["Image"]?.["ImageDescription"] ?? exifAny?.["image"]?.["ImageDescription"];
       if (raw) {
         return Buffer.isBuffer(raw) ? raw.toString("utf8").replace(/\0/g, "") : String(raw);
       }
@@ -64,7 +65,10 @@ function extractAltFromTiff(buf: Buffer): string {
         dataOffset = readUint32(entryOffset + 8);
       }
       if (dataOffset + count > buf.length) return "";
-      return buf.subarray(dataOffset, dataOffset + count).toString("utf8").replace(/\0/g, "");
+      return buf
+        .subarray(dataOffset, dataOffset + count)
+        .toString("utf8")
+        .replace(/\0/g, "");
     }
   }
   return "";

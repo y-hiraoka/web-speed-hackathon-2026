@@ -43,10 +43,14 @@ movieRouter.post("/movies", async (req, res) => {
   try {
     await fs.writeFile(tmpInput, req.body);
     await execFileAsync("ffmpeg", [
-      "-i", tmpInput,
-      "-t", "5",
-      "-r", "10",
-      "-vf", "crop='min(iw,ih)':'min(iw,ih)'",
+      "-i",
+      tmpInput,
+      "-t",
+      "5",
+      "-r",
+      "10",
+      "-vf",
+      "crop='min(iw,ih)':'min(iw,ih)'",
       "-an",
       "-y",
       outputPath,

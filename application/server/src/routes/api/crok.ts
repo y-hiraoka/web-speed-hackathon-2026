@@ -24,7 +24,9 @@ let tokenizerPromise: Promise<Tokenizer<IpadicFeatures>> | null = null;
 function getCrokTokenizer(): Promise<Tokenizer<IpadicFeatures>> {
   if (!tokenizerPromise) {
     const dicPath = path.resolve("node_modules/kuromoji/dict");
-    const builder = Bluebird.promisifyAll(kuromoji.builder({ dicPath })) as ReturnType<typeof kuromoji.builder> & { buildAsync: () => Promise<Tokenizer<IpadicFeatures>> };
+    const builder = Bluebird.promisifyAll(kuromoji.builder({ dicPath })) as ReturnType<
+      typeof kuromoji.builder
+    > & { buildAsync: () => Promise<Tokenizer<IpadicFeatures>> };
     tokenizerPromise = builder.buildAsync();
   }
   return tokenizerPromise;

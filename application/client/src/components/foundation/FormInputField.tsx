@@ -18,7 +18,18 @@ interface Props {
   placeholder?: string;
 }
 
-export const FormInputField = ({ label, leftItem, rightItem, name, value, onChange, onBlur, touched, error, ...props }: Props) => {
+export const FormInputField = ({
+  label,
+  leftItem,
+  rightItem,
+  name,
+  value,
+  onChange,
+  onBlur,
+  touched,
+  error,
+  ...props
+}: Props) => {
   const inputId = useId();
   const errorMessageId = useId();
   const isInvalid = touched && error;

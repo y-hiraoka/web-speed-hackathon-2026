@@ -22,7 +22,9 @@ directMessageRouter.get("/dm", async (req, res) => {
     where: {
       [Op.and]: [
         { [Op.or]: [{ initiatorId: req.session.userId }, { memberId: req.session.userId }] },
-        literal(`(SELECT COUNT(*) FROM DirectMessages WHERE DirectMessages.conversationId = DirectMessageConversation.id) > 0`),
+        literal(
+          `(SELECT COUNT(*) FROM DirectMessages WHERE DirectMessages.conversationId = DirectMessageConversation.id) > 0`,
+        ),
       ],
     },
   });
@@ -42,9 +44,7 @@ directMessageRouter.get("/dm", async (req, res) => {
         ),
       },
     },
-    include: [
-      { association: "sender", include: [{ association: "profileImage" }] },
-    ],
+    include: [{ association: "sender", include: [{ association: "profileImage" }] }],
   });
 
   // Fetch one unread message per conversation from the peer (to signal unread status)
@@ -56,9 +56,7 @@ directMessageRouter.get("/dm", async (req, res) => {
         ),
       },
     },
-    include: [
-      { association: "sender", include: [{ association: "profileImage" }] },
-    ],
+    include: [{ association: "sender", include: [{ association: "profileImage" }] }],
   });
 
   // Build maps
@@ -252,9 +250,7 @@ directMessageRouter.post("/dm/:conversationId/messages", async (req, res) => {
     senderId: req.session.userId,
   });
   await message.reload({
-    include: [
-      { association: "sender", include: [{ association: "profileImage" }] },
-    ],
+    include: [{ association: "sender", include: [{ association: "profileImage" }] }],
   });
 
   return res.status(201).type("application/json").send(message);
@@ -317,7 +313,9 @@ directMessageRouter.post("/dm/:conversationId/typing", async (req, res) => {
     throw new httpErrors.Unauthorized();
   }
 
-  const conversation = await DirectMessageConversation.unscoped().findByPk(req.params.conversationId);
+  const conversation = await DirectMessageConversation.unscoped().findByPk(
+    req.params.conversationId,
+  );
   if (conversation === null) {
     throw new httpErrors.NotFound();
   }
