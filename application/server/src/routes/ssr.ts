@@ -53,7 +53,7 @@ ssrRouter.get("/{*splat}", async (req, res, next) => {
 
     // For the homepage, prefetch posts
     if (url === "/") {
-      const posts = await Post.findAll({ limit: 30, offset: 0 });
+      const posts = await Post.findAll({ limit: 30, offset: 0, order: [["createdAt", "DESC"]] });
       initialData.posts = posts.map((p) => p.toJSON());
     }
 

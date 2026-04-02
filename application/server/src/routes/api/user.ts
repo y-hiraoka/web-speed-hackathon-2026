@@ -65,6 +65,7 @@ userRouter.get("/users/:username/posts", async (req, res) => {
     where: {
       userId: user.id,
     },
+    order: [["createdAt", "DESC"]],
   });
 
   return res.status(200).type("application/json").send(posts);

@@ -9,6 +9,7 @@ postRouter.get("/posts", async (req, res) => {
   const posts = await Post.findAll({
     limit: req.query["limit"] != null ? Number(req.query["limit"]) : undefined,
     offset: req.query["offset"] != null ? Number(req.query["offset"]) : undefined,
+    order: [["createdAt", "DESC"]],
   });
 
   return res.status(200).type("application/json").send(posts);
