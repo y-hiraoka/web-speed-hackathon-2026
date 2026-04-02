@@ -17,6 +17,32 @@ export default defineConfig({
     outDir: DIST_PATH,
     emptyOutDir: true,
     target: "esnext",
+    cssMinify: "lightningcss",
+    rollupOptions: {
+      output: {
+        manualChunks(id: string) {
+          if (id.includes("node_modules")) {
+            if (id.includes("/react/") || id.includes("/react-dom/") || id.includes("/react-router/")) {
+              return "vendor-react";
+            }
+            if (
+              id.includes("/react-markdown/") ||
+              id.includes("/remark-gfm/") ||
+              id.includes("/remark-math/") ||
+              id.includes("/rehype-katex/") ||
+              id.includes("/react-syntax-highlighter/") ||
+              id.includes("/refractor/") ||
+              id.includes("/highlight.js/")
+            ) {
+              return "vendor-markdown";
+            }
+            if (id.includes("/katex/")) {
+              return "vendor-katex";
+            }
+          }
+        },
+      },
+    },
   },
   resolve: {
     alias: [
