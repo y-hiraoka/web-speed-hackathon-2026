@@ -70,6 +70,7 @@ soundRouter.get("/sounds/:soundId/waveform", async (req, res) => {
   // Check cache
   const cached = waveformCache.get(soundId);
   if (cached) {
+    res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
     return res.status(200).type("application/json").send(cached);
   }
 
@@ -93,6 +94,7 @@ soundRouter.get("/sounds/:soundId/waveform", async (req, res) => {
   const waveform = await computeWaveform(soundFilePath);
   waveformCache.set(soundId, waveform);
 
+  res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
   return res.status(200).type("application/json").send(waveform);
 });
 

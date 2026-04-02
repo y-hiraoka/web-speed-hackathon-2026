@@ -12,6 +12,25 @@ interface WaveformData {
   peaks: number[];
 }
 
+const waveformMemCache = new Map<string, WaveformData>();
+const waveformInflight = new Map<string, Promise<WaveformData>>();
+
+async function fetchWaveformCached(url: string): Promise<WaveformData> {
+  const cached = waveformMemCache.get(url);
+  if (cached) return cached;
+
+  let inflight = waveformInflight.get(url);
+  if (!inflight) {
+    inflight = fetchJSON<WaveformData>(url).then((data) => {
+      waveformMemCache.set(url, data);
+      waveformInflight.delete(url);
+      return data;
+    });
+    waveformInflight.set(url, inflight);
+  }
+  return inflight;
+}
+
 interface Props {
   sound: Models.Sound;
 }
@@ -19,7 +38,7 @@ interface Props {
 export const SoundPlayer = ({ sound }: Props) => {
   const { data: waveform } = useFetch<WaveformData>(
     `/api/v1/sounds/${sound.id}/waveform`,
-    fetchJSON,
+    fetchWaveformCached,
   );
 
   const soundUrl = getSoundPath(sound.id);
