@@ -7,36 +7,37 @@ interface Props {
 }
 
 export const InfiniteScroll = ({ children, fetchMore, items }: Props) => {
+  const sentinelRef = useRef<HTMLDivElement>(null);
   const latestItem = items[items.length - 1];
+  const fetchMoreRef = useRef(fetchMore);
+  fetchMoreRef.current = fetchMore;
 
-  const prevReachedRef = useRef(false);
+  const latestItemRef = useRef(latestItem);
+  latestItemRef.current = latestItem;
 
   useEffect(() => {
-    const handler = () => {
-      const hasReached = window.innerHeight + Math.ceil(window.scrollY) >= document.body.offsetHeight;
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
 
-      // 画面最下部にスクロールしたタイミングで、登録したハンドラを呼び出す
-      if (hasReached && !prevReachedRef.current) {
-        // アイテムがないときは追加で読み込まない
-        if (latestItem !== undefined) {
-          fetchMore();
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting && latestItemRef.current !== undefined) {
+          fetchMoreRef.current();
         }
-      }
+      },
+      { rootMargin: "200px" },
+    );
 
-      prevReachedRef.current = hasReached;
-    };
-
-    // 最初は実行されないので手動で呼び出す
-    prevReachedRef.current = false;
-    handler();
-
-    window.addEventListener("scroll", handler, { passive: true });
-    window.addEventListener("resize", handler, { passive: true });
+    observer.observe(sentinel);
     return () => {
-      window.removeEventListener("scroll", handler);
-      window.removeEventListener("resize", handler);
+      observer.disconnect();
     };
-  }, [latestItem, fetchMore]);
+  }, [latestItem]);
 
-  return <>{children}</>;
+  return (
+    <>
+      {children}
+      <div ref={sentinelRef} style={{ height: 1 }} />
+    </>
+  );
 };
