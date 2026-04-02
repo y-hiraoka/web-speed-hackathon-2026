@@ -23,9 +23,10 @@ export async function initializeSequelize() {
   await fs.unlink(`${TEMP_PATH}-shm`).catch(() => {});
   await fs.copyFile(DATABASE_PATH, TEMP_PATH);
 
+  const enableLogging = process.env["DEBUG_SQL"] === "true";
   _sequelize = new Sequelize({
     dialect: "sqlite",
-    logging: false,
+    logging: enableLogging ? console.log : false,
     storage: TEMP_PATH,
   });
 
