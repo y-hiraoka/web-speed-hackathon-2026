@@ -6,9 +6,27 @@ import { compression } from "vite-plugin-compression2";
 
 const DIST_PATH = path.resolve(__dirname, "../dist");
 
+const buildInfoPlugin = (): import("vite").Plugin => {
+  const buildDate = JSON.stringify(new Date().toISOString());
+  const commitHash = JSON.stringify(process.env["SOURCE_VERSION"] || "");
+  return {
+    name: "inject-build-info",
+    transformIndexHtml() {
+      return [
+        {
+          tag: "script",
+          children: `window.__BUILD_INFO__={BUILD_DATE:${buildDate},COMMIT_HASH:${commitHash}};`,
+          injectTo: "head-prepend",
+        },
+      ];
+    },
+  };
+};
+
 export default defineConfig({
   root: __dirname,
   plugins: [
+    buildInfoPlugin(),
     react(),
     compression({ algorithm: "gzip", exclude: [/\.(br|gz)$/] }),
     compression({ algorithm: "brotliCompress", exclude: [/\.(br|gz)$/] }),
@@ -57,8 +75,6 @@ export default defineConfig({
     ],
   },
   define: {
-    "process.env.BUILD_DATE": JSON.stringify(new Date().toISOString()),
-    "process.env.COMMIT_HASH": JSON.stringify(process.env["SOURCE_VERSION"] || ""),
     "process.env.NODE_ENV": JSON.stringify("production"),
   },
   ssr: {
