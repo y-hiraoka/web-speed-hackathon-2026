@@ -18,6 +18,20 @@ const rawBodyParser = bodyParser.raw({ limit: "10mb" });
 
 export const apiRouter = Router();
 
+// Set Cache-Control headers for API responses based on endpoint characteristics
+apiRouter.use((req, res, next) => {
+  if (req.method === "GET") {
+    // Authenticated endpoints: private cache, must revalidate
+    if (req.path === "/me" || req.path.startsWith("/dm")) {
+      res.setHeader("Cache-Control", "private, no-cache");
+    } else {
+      // Public read endpoints (posts, users, search, comments): allow short caching
+      res.setHeader("Cache-Control", "public, max-age=5, stale-while-revalidate=30");
+    }
+  }
+  next();
+});
+
 apiRouter.use(initializeRouter);
 apiRouter.use(userRouter);
 apiRouter.use(postRouter);
