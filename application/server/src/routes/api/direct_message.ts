@@ -145,9 +145,27 @@ directMessageRouter.ws("/dm/unread", async (req, _res) => {
   };
 
   eventhub.on(`dm:unread/${req.session.userId}`, handler);
-  req.ws.on("close", () => {
-    eventhub.off(`dm:unread/${req.session.userId}`, handler);
+
+  // Heartbeat: ping every 30s, terminate if no pong within 10s
+  let isAlive = true;
+  req.ws.on("pong", () => {
+    isAlive = true;
   });
+  const pingInterval = setInterval(() => {
+    if (!isAlive) {
+      req.ws.terminate();
+      return;
+    }
+    isAlive = false;
+    req.ws.ping();
+  }, 30_000);
+
+  const cleanup = () => {
+    clearInterval(pingInterval);
+    eventhub.off(`dm:unread/${req.session.userId}`, handler);
+  };
+  req.ws.on("close", cleanup);
+  req.ws.on("error", cleanup);
 
   const unreadCount = await DirectMessage.count({
     distinct: true,
@@ -211,17 +229,33 @@ directMessageRouter.ws("/dm/:conversationId", async (req, _res) => {
     req.ws.send(JSON.stringify({ type: "dm:conversation:message", payload }));
   };
   eventhub.on(`dm:conversation/${conversation.id}:message`, handleMessageUpdated);
-  req.ws.on("close", () => {
-    eventhub.off(`dm:conversation/${conversation.id}:message`, handleMessageUpdated);
-  });
 
   const handleTyping = (payload: unknown) => {
     req.ws.send(JSON.stringify({ type: "dm:conversation:typing", payload }));
   };
   eventhub.on(`dm:conversation/${conversation.id}:typing/${peerId}`, handleTyping);
-  req.ws.on("close", () => {
-    eventhub.off(`dm:conversation/${conversation.id}:typing/${peerId}`, handleTyping);
+
+  // Heartbeat: ping every 30s, terminate if no pong within 10s
+  let isAlive = true;
+  req.ws.on("pong", () => {
+    isAlive = true;
   });
+  const pingInterval = setInterval(() => {
+    if (!isAlive) {
+      req.ws.terminate();
+      return;
+    }
+    isAlive = false;
+    req.ws.ping();
+  }, 30_000);
+
+  const cleanup = () => {
+    clearInterval(pingInterval);
+    eventhub.off(`dm:conversation/${conversation.id}:message`, handleMessageUpdated);
+    eventhub.off(`dm:conversation/${conversation.id}:typing/${peerId}`, handleTyping);
+  };
+  req.ws.on("close", cleanup);
+  req.ws.on("error", cleanup);
 });
 
 directMessageRouter.post("/dm/:conversationId/messages", async (req, res) => {
