@@ -76,20 +76,14 @@ searchRouter.get("/search", async (req, res) => {
   const dateWhere =
     dateConditions.length > 0 ? { createdAt: Object.assign({}, ...dateConditions) } : {};
 
-  // テキスト検索
-  const textPosts = searchTerm
-    ? await Post.findAll({
-        order: [["createdAt", "DESC"]],
-        where: {
-          ...dateWhere,
-          text: { [Op.like]: searchTerm },
-        },
-      })
-    : [];
+  // Build OR conditions for a single query instead of multiple full-table scans
+  const orConditions: any[] = [];
 
-  // ユーザー名・表示名検索
-  let userPosts: typeof textPosts = [];
   if (searchTerm) {
+    // テキスト検索
+    orConditions.push({ ...dateWhere, text: { [Op.like]: searchTerm } });
+
+    // ユーザー名・表示名検索
     const matchingUsers = await User.findAll({
       attributes: ["id"],
       where: {
@@ -101,42 +95,24 @@ searchRouter.get("/search", async (req, res) => {
     });
     if (matchingUsers.length > 0) {
       const userIds = matchingUsers.map((u) => u.id);
-      userPosts = await Post.findAll({
-        order: [["createdAt", "DESC"]],
-        where: {
-          ...dateWhere,
-          userId: { [Op.in]: userIds },
-        },
-      });
+      orConditions.push({ ...dateWhere, userId: { [Op.in]: userIds } });
     }
+  } else if (sinceDate || untilDate) {
+    // 日付のみ指定の場合
+    orConditions.push(dateWhere);
   }
 
-  // 日付のみ指定の場合
-  const datePosts =
-    !searchTerm && (sinceDate || untilDate)
-      ? await Post.findAll({
-          order: [["createdAt", "DESC"]],
-          where: dateWhere,
-        })
-      : [];
-
-  // 重複排除してマージ
-  const postIdSet = new Set<string>();
-  const merged: typeof textPosts = [];
-  for (const post of [...textPosts, ...userPosts, ...datePosts]) {
-    if (!postIdSet.has(post.id)) {
-      postIdSet.add(post.id);
-      merged.push(post);
-    }
+  if (orConditions.length === 0) {
+    return res.status(200).type("application/json").send([]);
   }
 
-  // createdAt DESC でソート
-  merged.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-
-  // ページネーション
-  const start = offset ?? 0;
-  const end = limit != null ? start + limit : merged.length;
-  const result = merged.slice(start, end);
+  // Single query with DB-level pagination
+  const result = await Post.findAll({
+    where: { [Op.or]: orConditions },
+    order: [["createdAt", "DESC"]],
+    limit,
+    offset,
+  });
 
   return res.status(200).type("application/json").send(result);
 });
