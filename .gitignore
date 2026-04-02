@@ -222,3 +222,6 @@ application/upload/**
 !application/upload/**/.gitkeep
 
 .claude/settings.local.json
+
+# Generated database
+application/server/database.sqlite

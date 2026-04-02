@@ -14,12 +14,17 @@ RUN --mount=type=cache,target=/root/.npm npm install -g pnpm@${PNPM_VERSION}
 
 FROM base AS build
 
+RUN apt-get update -qq && apt-get install -y --no-install-recommends build-essential python3 && rm -rf /var/lib/apt/lists/*
+
 COPY ./application/package.json ./application/pnpm-lock.yaml ./application/pnpm-workspace.yaml ./
 COPY ./application/client/package.json ./client/package.json
 COPY ./application/server/package.json ./server/package.json
 RUN --mount=type=cache,target=/pnpm/store pnpm install --frozen-lockfile
 
 COPY ./application .
+
+RUN cd /app/node_modules/.pnpm/sqlite3@5.1.7/node_modules/sqlite3 && npx --yes node-gyp rebuild --release
+RUN pnpm --filter @web-speed-hackathon-2026/server run seed:insert
 
 RUN NODE_OPTIONS="--max-old-space-size=4096" pnpm build
 
