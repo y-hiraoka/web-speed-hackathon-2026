@@ -26,7 +26,9 @@ movieRouter.post("/movies", async (req, res) => {
     throw new httpErrors.BadRequest();
   }
 
-  const type = await fileTypeFromBuffer(req.body);
+  // Only pass the first 4100 bytes (file-type's minimum) to avoid copying the entire buffer
+  const headerSlice = (req.body as Buffer).subarray(0, 4100);
+  const type = await fileTypeFromBuffer(headerSlice);
   if (type === undefined || !type.mime.startsWith("video/")) {
     throw new httpErrors.BadRequest("Invalid file type");
   }
