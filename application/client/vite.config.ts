@@ -27,6 +27,9 @@ export default defineConfig({
     host: "0.0.0.0",
     proxy: {
       "/api": "http://localhost:3000",
+      "/images": "http://localhost:3000",
+      "/movies": "http://localhost:3000",
+      "/sounds": "http://localhost:3000",
     },
   },
 
@@ -35,10 +38,6 @@ export default defineConfig({
       "@web-speed-hackathon-2026/client": path.resolve(__dirname),
       "bayesian-bm25": path.resolve(__dirname, "node_modules/bayesian-bm25/dist/index.js"),
       kuromoji: path.resolve(__dirname, "node_modules/kuromoji/build/kuromoji.js"),
-      "@ffmpeg/ffmpeg": path.resolve(__dirname, "node_modules/@ffmpeg/ffmpeg/dist/esm/index.js"),
-      fs: path.resolve(__dirname, "src/shims/empty-module.ts"),
-      path: path.resolve(__dirname, "src/shims/empty-module.ts"),
-      url: path.resolve(__dirname, "src/shims/empty-module.ts"),
     },
   },
 
@@ -48,7 +47,4 @@ export default defineConfig({
     "process.env.NODE_ENV": JSON.stringify(process.env["NODE_ENV"] ?? "development"),
   },
 
-  optimizeDeps: {
-    exclude: ["@ffmpeg/ffmpeg", "@ffmpeg/core"],
-  },
 });

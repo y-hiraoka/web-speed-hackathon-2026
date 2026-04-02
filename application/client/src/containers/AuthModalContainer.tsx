@@ -32,7 +32,7 @@ function getErrorCode(err: HttpError, type: "signin" | "signup"): string {
     }
   }
 
-  const code = (responseJSON as Record<string, string>)["code"];
+  const code = (responseJSON as Record<string, string>)["code"]!;
   return ERROR_MESSAGES[code]!;
 }
 
