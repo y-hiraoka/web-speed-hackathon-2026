@@ -53,8 +53,11 @@ export const DirectMessageContainer = ({ activeUser, authModalId }: Props) => {
   }, [activeUser, conversationId]);
 
   const sendRead = useCallback(async () => {
+    if (activeUser == null) {
+      return;
+    }
     await sendJSON(`/api/v1/dm/${conversationId}/read`, {});
-  }, [conversationId]);
+  }, [activeUser, conversationId]);
 
   useEffect(() => {
     void loadConversation();
@@ -80,7 +83,7 @@ export const DirectMessageContainer = ({ activeUser, authModalId }: Props) => {
     void sendJSON(`/api/v1/dm/${conversationId}/typing`, {});
   }, [conversationId]);
 
-  useWs(`/api/v1/dm/${conversationId}`, (event: DmUpdateEvent | DmTypingEvent) => {
+  useWs(activeUser != null ? `/api/v1/dm/${conversationId}` : null, (event: DmUpdateEvent | DmTypingEvent) => {
     if (event.type === "dm:conversation:message") {
       void loadConversation().then(() => {
         if (event.payload.sender.id !== activeUser?.id) {

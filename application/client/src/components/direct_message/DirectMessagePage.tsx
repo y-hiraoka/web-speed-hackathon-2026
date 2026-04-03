@@ -23,6 +23,12 @@ interface Props {
   onSubmit: (params: DirectMessageFormData) => Promise<void>;
 }
 
+const timeFormatter = new Intl.DateTimeFormat("ja", {
+  hour: "2-digit",
+  minute: "2-digit",
+  hour12: false,
+});
+
 export const DirectMessagePage = ({
   conversationError,
   conversation,
@@ -72,17 +78,28 @@ export const DirectMessagePage = ({
   );
 
   useEffect(() => {
+    let rafId: number | null = null;
+
     const observer = new ResizeObserver(() => {
-      const height = document.body.scrollHeight;
-      if (height !== scrollHeightRef.current) {
-        scrollHeightRef.current = height;
-        window.scrollTo(0, height);
-      }
+      if (rafId != null) return;
+      rafId = requestAnimationFrame(() => {
+        rafId = null;
+        const height = document.body.scrollHeight;
+        if (height !== scrollHeightRef.current) {
+          scrollHeightRef.current = height;
+          window.scrollTo(0, height);
+        }
+      });
     });
 
     observer.observe(document.body);
 
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      if (rafId != null) {
+        cancelAnimationFrame(rafId);
+      }
+    };
   }, []);
 
   if (conversationError != null) {
@@ -128,6 +145,7 @@ export const DirectMessagePage = ({
 
             return (
               <li
+                key={message.id}
                 className={`flex w-full flex-col ${isActiveUserSend ? "items-end" : "items-start"}`}
               >
                 <p
@@ -137,11 +155,7 @@ export const DirectMessagePage = ({
                 </p>
                 <div className="flex gap-1 text-xs">
                   <time dateTime={message.createdAt}>
-                    {new Intl.DateTimeFormat("ja", {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                      hour12: false,
-                    }).format(new Date(message.createdAt))}
+                    {timeFormatter.format(new Date(message.createdAt))}
                   </time>
                   {isActiveUserSend && message.isRead && (
                     <span className="text-cax-text-muted">既読</span>

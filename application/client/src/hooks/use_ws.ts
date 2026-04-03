@@ -1,11 +1,14 @@
 import { useEffect, useEffectEvent } from "react";
 
-export function useWs<T>(url: string, onMessage: (event: T) => void) {
+export function useWs<T>(url: string | null, onMessage: (event: T) => void) {
   const handleMessage = useEffectEvent((event: MessageEvent) => {
     onMessage(JSON.parse(event.data));
   });
 
   useEffect(() => {
+    if (url == null) return;
+
+    const wsUrl = url;
     let ws: WebSocket | null = null;
     let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
     let disposed = false;
@@ -14,7 +17,7 @@ export function useWs<T>(url: string, onMessage: (event: T) => void) {
     function connect() {
       if (disposed) return;
 
-      ws = new WebSocket(url);
+      ws = new WebSocket(wsUrl);
       ws.addEventListener("message", handleMessage);
       ws.addEventListener("open", () => {
         backoff = 1000;
