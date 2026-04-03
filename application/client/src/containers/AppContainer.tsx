@@ -65,10 +65,9 @@ export const AppContainer = () => {
     if (hasInitialMe) {
       return;
     }
-    void fetchJSON<Models.User>("/api/v1/me")
-      .then((user) => {
-        setActiveUser(user);
-      });
+    void fetchJSON<Models.User>("/api/v1/me").then((user) => {
+      setActiveUser(user);
+    });
   }, [setActiveUser, hasInitialMe]);
   const handleLogout = useCallback(async () => {
     await sendJSON("/api/v1/signout", {});

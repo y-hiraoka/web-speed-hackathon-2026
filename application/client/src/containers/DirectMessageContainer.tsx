@@ -83,28 +83,31 @@ export const DirectMessageContainer = ({ activeUser, authModalId }: Props) => {
     void sendJSON(`/api/v1/dm/${conversationId}/typing`, {});
   }, [conversationId]);
 
-  useWs(activeUser != null ? `/api/v1/dm/${conversationId}` : null, (event: DmUpdateEvent | DmTypingEvent) => {
-    if (event.type === "dm:conversation:message") {
-      void loadConversation().then(() => {
-        if (event.payload.sender.id !== activeUser?.id) {
-          setIsPeerTyping(false);
-          if (peerTypingTimeoutRef.current !== null) {
-            clearTimeout(peerTypingTimeoutRef.current);
+  useWs(
+    activeUser != null ? `/api/v1/dm/${conversationId}` : null,
+    (event: DmUpdateEvent | DmTypingEvent) => {
+      if (event.type === "dm:conversation:message") {
+        void loadConversation().then(() => {
+          if (event.payload.sender.id !== activeUser?.id) {
+            setIsPeerTyping(false);
+            if (peerTypingTimeoutRef.current !== null) {
+              clearTimeout(peerTypingTimeoutRef.current);
+            }
+            peerTypingTimeoutRef.current = null;
           }
-          peerTypingTimeoutRef.current = null;
+        });
+        void sendRead();
+      } else if (event.type === "dm:conversation:typing") {
+        setIsPeerTyping(true);
+        if (peerTypingTimeoutRef.current !== null) {
+          clearTimeout(peerTypingTimeoutRef.current);
         }
-      });
-      void sendRead();
-    } else if (event.type === "dm:conversation:typing") {
-      setIsPeerTyping(true);
-      if (peerTypingTimeoutRef.current !== null) {
-        clearTimeout(peerTypingTimeoutRef.current);
+        peerTypingTimeoutRef.current = setTimeout(() => {
+          setIsPeerTyping(false);
+        }, TYPING_INDICATOR_DURATION_MS);
       }
-      peerTypingTimeoutRef.current = setTimeout(() => {
-        setIsPeerTyping(false);
-      }, TYPING_INDICATOR_DURATION_MS);
-    }
-  });
+    },
+  );
 
   if (activeUser === null) {
     return (

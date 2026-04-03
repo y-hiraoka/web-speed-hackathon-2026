@@ -53,17 +53,20 @@ apiRouter.use(async (err: Error, _req: Request, _res: Response, _next: NextFunct
   throw err;
 });
 
-apiRouter.use(async (err: Error & { status?: number }, _req: Request, res: Response, _next: NextFunction) => {
-  const status = httpErrors.isHttpError(err) ? err.status : (typeof err.status === "number" && err.status >= 400 && err.status < 600) ? err.status : 500;
+apiRouter.use(
+  async (err: Error & { status?: number }, _req: Request, res: Response, _next: NextFunction) => {
+    const status = httpErrors.isHttpError(err)
+      ? err.status
+      : typeof err.status === "number" && err.status >= 400 && err.status < 600
+        ? err.status
+        : 500;
 
-  if (status === 500) {
-    console.error(err);
-  }
+    if (status === 500) {
+      console.error(err);
+    }
 
-  return res
-    .status(status)
-    .type("application/json")
-    .send({
+    return res.status(status).type("application/json").send({
       message: err.message,
     });
-});
+  },
+);

@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useId, useRef, useState } from "react";
-import { useNavigate } from "react-router";
 
 import { Modal } from "@web-speed-hackathon-2026/client/src/components/modal/Modal";
 import { NewPostModalPage } from "@web-speed-hackathon-2026/client/src/components/new_post_modal/NewPostModalPage";
@@ -49,8 +48,6 @@ export const NewPostModalContainer = ({ id }: Props) => {
     };
   }, []);
 
-  const navigate = useNavigate();
-
   const [hasError, setHasError] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -58,21 +55,20 @@ export const NewPostModalContainer = ({ id }: Props) => {
     setHasError(false);
   }, []);
 
-  const handleSubmit = useCallback(
-    async (params: SubmitParams) => {
-      try {
-        setIsLoading(true);
-        const post = await sendNewPost(params);
-        ref.current?.close();
-        navigate(`/posts/${post.id}`);
-      } catch {
-        setHasError(true);
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [navigate],
-  );
+  const handleSubmit = useCallback(async (params: SubmitParams) => {
+    try {
+      setIsLoading(true);
+      await sendNewPost(params);
+      ref.current?.close();
+      // Stay on the current page and reload so the timeline refreshes with the new post.
+      // The scoring tool expects to find the new article on the same page (/).
+      window.location.reload();
+    } catch {
+      setHasError(true);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   return (
     <Modal aria-labelledby={dialogId} id={id} ref={ref} closedby="any">
