@@ -6,7 +6,6 @@ import { AuthModalContainer } from "@web-speed-hackathon-2026/client/src/contain
 import { NotFoundContainer } from "@web-speed-hackathon-2026/client/src/containers/NotFoundContainer";
 import { TimelineContainer } from "@web-speed-hackathon-2026/client/src/containers/TimelineContainer";
 import { fetchJSON, sendJSON } from "@web-speed-hackathon-2026/client/src/utils/fetchers";
-import { useInitialData } from "@web-speed-hackathon-2026/client/src/utils/initial_data_context";
 
 const CrokContainer = lazy(() =>
   import("@web-speed-hackathon-2026/client/src/containers/CrokContainer").then((m) => ({
@@ -56,8 +55,7 @@ export const AppContainer = () => {
     window.scrollTo(0, 0);
   }, [pathname]);
 
-  const initialData =
-    useInitialData() ?? (typeof window !== "undefined" ? window.__INITIAL_DATA__ : undefined);
+  const initialData = window.__INITIAL_DATA__;
   const hasInitialMe = initialData != null && "me" in initialData;
 
   const [activeUser, setActiveUser] = useState<Models.User | null>(
@@ -65,7 +63,6 @@ export const AppContainer = () => {
   );
   const [isLoadingActiveUser, setIsLoadingActiveUser] = useState(!hasInitialMe);
   useEffect(() => {
-    // Skip fetching if initial data was provided by SSR
     if (hasInitialMe) {
       return;
     }

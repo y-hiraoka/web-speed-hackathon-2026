@@ -77,11 +77,6 @@ export default defineConfig({
   define: {
     "process.env.NODE_ENV": JSON.stringify("production"),
   },
-  ssr: {
-    // Bundle all dependencies so the SSR entry is self-contained
-    // and can be imported from any location (e.g. ../dist/server/)
-    noExternal: true,
-  },
   server: {
     port: 8080,
     proxy: {
