@@ -3,7 +3,7 @@ import httpErrors from "http-errors";
 
 import { Comment, Post } from "@web-speed-hackathon-2026/server/src/models";
 
-const DEFAULT_LIMIT = 30;
+const DEFAULT_LIMIT = 10;
 const MAX_LIMIT = 100;
 
 export const postRouter = Router();
