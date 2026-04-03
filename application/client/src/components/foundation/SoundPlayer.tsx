@@ -3,7 +3,8 @@ import { ReactEventHandler, useCallback, useRef, useState } from "react";
 import { AspectRatioBox } from "@web-speed-hackathon-2026/client/src/components/foundation/AspectRatioBox";
 import { FontAwesomeIcon } from "@web-speed-hackathon-2026/client/src/components/foundation/FontAwesomeIcon";
 import { SoundWaveSVG } from "@web-speed-hackathon-2026/client/src/components/foundation/SoundWaveSVG";
-import { useFetch } from "@web-speed-hackathon-2026/client/src/hooks/use_fetch";
+import useSWR from "swr";
+
 import { fetchJSON } from "@web-speed-hackathon-2026/client/src/utils/fetchers";
 import { getSoundPath } from "@web-speed-hackathon-2026/client/src/utils/get_path";
 
@@ -20,7 +21,7 @@ async function fetchWaveform(url: string): Promise<WaveformResponse> {
 }
 
 export const SoundPlayer = ({ sound }: Props) => {
-  const { data: waveform } = useFetch(
+  const { data: waveform } = useSWR(
     `/api/v1/sounds/${sound.id}`,
     fetchWaveform,
   );
@@ -78,7 +79,7 @@ export const SoundPlayer = ({ sound }: Props) => {
           <AspectRatioBox aspectHeight={1} aspectWidth={10}>
             <div className="relative h-full w-full">
               <div className="absolute inset-0 h-full w-full">
-                {waveform !== null ? (
+                {waveform != null ? (
                   <SoundWaveSVG peaks={waveform.peaks} />
                 ) : null}
               </div>

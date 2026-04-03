@@ -1,23 +1,24 @@
 import { Helmet } from "react-helmet";
 import { useParams } from "react-router";
+import useSWR from "swr";
 
 import { InfiniteScroll } from "@web-speed-hackathon-2026/client/src/components/foundation/InfiniteScroll";
 import { UserProfilePage } from "@web-speed-hackathon-2026/client/src/components/user_profile/UserProfilePage";
 import { NotFoundContainer } from "@web-speed-hackathon-2026/client/src/containers/NotFoundContainer";
-import { useFetch } from "@web-speed-hackathon-2026/client/src/hooks/use_fetch";
-import { useInfiniteFetch } from "@web-speed-hackathon-2026/client/src/hooks/use_infinite_fetch";
+import { useInfiniteList } from "@web-speed-hackathon-2026/client/src/hooks/use_infinite_list";
 import { fetchJSON } from "@web-speed-hackathon-2026/client/src/utils/fetchers";
 
 export const UserProfileContainer = () => {
   const { username } = useParams();
 
-  const { data: user, isLoading: isLoadingUser } = useFetch<Models.User>(
+  const { data: user, error, isLoading: isLoadingUser } = useSWR<Models.User>(
     `/api/v1/users/${username}`,
     fetchJSON,
   );
-  const { data: posts, fetchMore } = useInfiniteFetch<Models.Post>(
+  const { data: posts, fetchMore } = useInfiniteList<Models.Post>(
     `/api/v1/users/${username}/posts`,
     fetchJSON,
+    { limit: 12 },
   );
 
   if (isLoadingUser) {
@@ -28,7 +29,7 @@ export const UserProfileContainer = () => {
     );
   }
 
-  if (user === null) {
+  if (error || !user) {
     return <NotFoundContainer />;
   }
 

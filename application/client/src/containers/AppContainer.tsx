@@ -1,11 +1,12 @@
-import { lazy, Suspense, useCallback, useEffect, useId, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useId } from "react";
 import { Helmet, HelmetProvider } from "react-helmet";
 import { Route, Routes, useLocation, useNavigate } from "react-router";
+import useSWR from "swr";
 
 import { AppPage } from "@web-speed-hackathon-2026/client/src/components/application/AppPage";
 import { AuthModalContainer } from "@web-speed-hackathon-2026/client/src/containers/AuthModalContainer";
 import { NewPostModalContainer } from "@web-speed-hackathon-2026/client/src/containers/NewPostModalContainer";
-import { fetchJSON, sendJSON } from "@web-speed-hackathon-2026/client/src/utils/fetchers";
+import { HttpError, fetchJSON, sendJSON } from "@web-speed-hackathon-2026/client/src/utils/fetchers";
 
 const CrokContainer = lazy(() => import("@web-speed-hackathon-2026/client/src/containers/CrokContainer").then((m) => ({ default: m.CrokContainer })));
 const DirectMessageContainer = lazy(() => import("@web-speed-hackathon-2026/client/src/containers/DirectMessageContainer").then((m) => ({ default: m.DirectMessageContainer })));
@@ -24,22 +25,19 @@ export const AppContainer = () => {
     window.scrollTo(0, 0);
   }, [pathname]);
 
-  const [activeUser, setActiveUser] = useState<Models.User | null>(null);
-  const [isLoadingActiveUser, setIsLoadingActiveUser] = useState(true);
-  useEffect(() => {
-    void fetchJSON<Models.User>("/api/v1/me")
-      .then((user) => {
-        setActiveUser(user);
-      })
-      .finally(() => {
-        setIsLoadingActiveUser(false);
-      });
-  }, [setActiveUser, setIsLoadingActiveUser]);
+  const { data: activeUserData, isLoading: isLoadingActiveUser, mutate: mutateActiveUser } = useSWR<Models.User | null>(
+    "/api/v1/me",
+    (url: string) => fetchJSON<Models.User>(url).catch((err) => {
+      if (err instanceof HttpError && err.status === 401) return null;
+      throw err;
+    }),
+  );
+  const activeUser = activeUserData ?? null;
   const handleLogout = useCallback(async () => {
     await sendJSON("/api/v1/signout", {});
-    setActiveUser(null);
+    await mutateActiveUser(null, { revalidate: false });
     navigate("/");
-  }, [navigate]);
+  }, [navigate, mutateActiveUser]);
 
   const authModalId = useId();
   const newPostModalId = useId();
@@ -88,7 +86,7 @@ export const AppContainer = () => {
         </Suspense>
       </AppPage>
 
-      <AuthModalContainer id={authModalId} onUpdateActiveUser={setActiveUser} />
+      <AuthModalContainer id={authModalId} onUpdateActiveUser={(user) => mutateActiveUser(user, { revalidate: false })} />
       <NewPostModalContainer id={newPostModalId} />
     </HelmetProvider>
   );
