@@ -16,7 +16,7 @@ export const SearchContainer = () => {
   );
 
   return (
-    <InfiniteScroll fetchMore={fetchMore} items={posts}>
+    <InfiniteScroll fetchMore={fetchMore}>
       <Helmet>
         <title>検索 - CaX</title>
       </Helmet>

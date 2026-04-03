@@ -1,49 +1,42 @@
-import { ReactNode, useEffect, useRef } from "react";
+import { ReactNode, useCallback, useRef } from "react";
 
 interface Props {
   children: ReactNode;
-  items: any[];
   fetchMore: () => void;
 }
 
-export const InfiniteScroll = ({ children, fetchMore, items }: Props) => {
-  const latestItem = items[items.length - 1];
+export const InfiniteScroll = ({ children, fetchMore }: Props) => {
+  const observerRef = useRef<IntersectionObserver | null>(null);
 
-  const prevReachedRef = useRef(false);
-
-  useEffect(() => {
-    const handler = () => {
-      // 念の為 2の18乗 回、最下部かどうかを確認する
-      const hasReached = Array.from(Array(2 ** 18), () => {
-        return window.innerHeight + Math.ceil(window.scrollY) >= document.body.offsetHeight;
-      }).every(Boolean);
-
-      // 画面最下部にスクロールしたタイミングで、登録したハンドラを呼び出す
-      if (hasReached && !prevReachedRef.current) {
-        // アイテムがないときは追加で読み込まない
-        if (latestItem !== undefined) {
-          fetchMore();
-        }
+  const sentinelRef = useCallback(
+    (node: HTMLDivElement | null) => {
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+        observerRef.current = null;
       }
 
-      prevReachedRef.current = hasReached;
-    };
+      if (node == null) {
+        return;
+      }
 
-    // 最初は実行されないので手動で呼び出す
-    prevReachedRef.current = false;
-    handler();
+      observerRef.current = new IntersectionObserver(
+        (entries) => {
+          if (entries[0]?.isIntersecting) {
+            fetchMore();
+          }
+        },
+        { rootMargin: "0px 0px 800px 0px" },
+      );
 
-    document.addEventListener("wheel", handler, { passive: false });
-    document.addEventListener("touchmove", handler, { passive: false });
-    document.addEventListener("resize", handler, { passive: false });
-    document.addEventListener("scroll", handler, { passive: false });
-    return () => {
-      document.removeEventListener("wheel", handler);
-      document.removeEventListener("touchmove", handler);
-      document.removeEventListener("resize", handler);
-      document.removeEventListener("scroll", handler);
-    };
-  }, [latestItem, fetchMore]);
+      observerRef.current.observe(node);
+    },
+    [fetchMore],
+  );
 
-  return <>{children}</>;
+  return (
+    <>
+      {children}
+      <div ref={sentinelRef} />
+    </>
+  );
 };

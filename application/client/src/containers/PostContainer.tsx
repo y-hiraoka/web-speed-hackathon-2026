@@ -32,7 +32,7 @@ const PostContainerContent = ({ postId }: { postId: string | undefined }) => {
   }
 
   return (
-    <InfiniteScroll fetchMore={fetchMore} items={comments}>
+    <InfiniteScroll fetchMore={fetchMore}>
       <Helmet>
         <title>{post.user.name} さんのつぶやき - CaX</title>
       </Helmet>

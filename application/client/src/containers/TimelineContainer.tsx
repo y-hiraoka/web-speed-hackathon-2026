@@ -9,7 +9,7 @@ export const TimelineContainer = () => {
   const { data: posts, fetchMore } = useInfiniteFetch<Models.Post>("/api/v1/posts", fetchJSON);
 
   return (
-    <InfiniteScroll fetchMore={fetchMore} items={posts}>
+    <InfiniteScroll fetchMore={fetchMore}>
       <Helmet>
         <title>タイムライン - CaX</title>
       </Helmet>

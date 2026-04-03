@@ -33,7 +33,7 @@ export const UserProfileContainer = () => {
   }
 
   return (
-    <InfiniteScroll fetchMore={fetchMore} items={posts}>
+    <InfiniteScroll fetchMore={fetchMore}>
       <Helmet>
         <title>{user.name} さんのタイムライン - CaX</title>
       </Helmet>
