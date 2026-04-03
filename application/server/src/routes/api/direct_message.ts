@@ -177,12 +177,15 @@ directMessageRouter.get("/dm/:conversationId", async (req, res) => {
     throw new httpErrors.NotFound();
   }
 
-  const messages = await DirectMessage.findAll({
+  // Fetch the latest 100 messages by using DESC + reverse, so newly sent messages are always included
+  // Use unscoped() to override the default scope's ASC order
+  const messages = await DirectMessage.unscoped().findAll({
     where: { conversationId: conversation.id },
     include: [{ association: "sender", include: [{ association: "profileImage" }] }],
-    order: [["createdAt", "ASC"]],
+    order: [["createdAt", "DESC"]],
     limit: 100,
   });
+  messages.reverse();
 
   const result = {
     ...conversation.toJSON(),
