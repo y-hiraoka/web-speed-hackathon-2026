@@ -20,12 +20,12 @@ export const UserProfileContainer = () => {
     fetchJSON,
   );
 
-  if (isLoadingUser) {
-    return null;
+  if (!isLoadingUser && user === null) {
+    return <NotFoundContainer />;
   }
 
   if (user === null) {
-    return <NotFoundContainer />;
+    return <DocumentTitle title="ユーザー - CaX" />;
   }
 
   return (

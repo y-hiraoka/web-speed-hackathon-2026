@@ -61,7 +61,6 @@ export const AppContainer = () => {
   const [activeUser, setActiveUser] = useState<Models.User | null>(
     hasInitialMe ? initialData.me : null,
   );
-  const [isLoadingActiveUser, setIsLoadingActiveUser] = useState(!hasInitialMe);
   useEffect(() => {
     if (hasInitialMe) {
       return;
@@ -69,11 +68,8 @@ export const AppContainer = () => {
     void fetchJSON<Models.User>("/api/v1/me")
       .then((user) => {
         setActiveUser(user);
-      })
-      .finally(() => {
-        setIsLoadingActiveUser(false);
       });
-  }, [setActiveUser, setIsLoadingActiveUser, hasInitialMe]);
+  }, [setActiveUser, hasInitialMe]);
   const handleLogout = useCallback(async () => {
     await sendJSON("/api/v1/signout", {});
     setActiveUser(null);
@@ -82,10 +78,6 @@ export const AppContainer = () => {
 
   const authModalId = useId();
   const newPostModalId = useId();
-
-  if (isLoadingActiveUser) {
-    return null;
-  }
 
   return (
     <>

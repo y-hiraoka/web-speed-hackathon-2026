@@ -19,12 +19,12 @@ const PostContainerContent = ({ postId }: { postId: string | undefined }) => {
     fetchJSON,
   );
 
-  if (isLoadingPost) {
-    return null;
+  if (!isLoadingPost && post === null) {
+    return <NotFoundContainer />;
   }
 
   if (post === null) {
-    return <NotFoundContainer />;
+    return <DocumentTitle title="投稿 - CaX" />;
   }
 
   return (
