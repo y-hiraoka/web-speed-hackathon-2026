@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { SubmissionError } from "redux-form";
 
-import { AuthFormData } from "@web-speed-hackathon-2026/client/src/auth/types";
+import { type AuthFormData } from "@web-speed-hackathon-2026/client/src/auth/schema";
 import { AuthModalPage } from "@web-speed-hackathon-2026/client/src/components/auth_modal/AuthModalPage";
 import { Modal } from "@web-speed-hackathon-2026/client/src/components/modal/Modal";
 import { HttpError, sendJSON } from "@web-speed-hackathon-2026/client/src/utils/fetchers";
@@ -44,7 +43,6 @@ export const AuthModalContainer = ({ id, onUpdateActiveUser }: Props) => {
     const element = ref.current;
 
     const handleToggle = () => {
-      // モーダル開閉時にkeyを更新することでフォームの状態をリセットする
       setResetKey((key) => key + 1);
     };
     element.addEventListener("toggle", handleToggle);
@@ -58,7 +56,7 @@ export const AuthModalContainer = ({ id, onUpdateActiveUser }: Props) => {
   }, [ref]);
 
   const handleSubmit = useCallback(
-    async (values: AuthFormData) => {
+    async (values: AuthFormData): Promise<string | void> => {
       try {
         if (values.type === "signup") {
           const user = await sendJSON<Models.User>("/api/v1/signup", values);
@@ -69,10 +67,7 @@ export const AuthModalContainer = ({ id, onUpdateActiveUser }: Props) => {
         }
         handleRequestCloseModal();
       } catch (err: unknown) {
-        const error = getErrorCode(err as HttpError, values.type);
-        throw new SubmissionError({
-          _error: error,
-        });
+        return getErrorCode(err as HttpError, values.type);
       }
     },
     [handleRequestCloseModal, onUpdateActiveUser],

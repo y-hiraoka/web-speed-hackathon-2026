@@ -16,7 +16,7 @@ export const SearchContainer = () => {
   return (
     <InfiniteScroll fetchMore={fetchMore}>
       <title>検索 - CaX</title>
-      <SearchPage query={query} results={posts} initialValues={{ searchText: query }} />
+      <SearchPage key={query} query={query} results={posts} />
     </InfiniteScroll>
   );
 };
