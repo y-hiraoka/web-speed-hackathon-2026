@@ -1,4 +1,4 @@
-import { lazy, memo, Suspense } from "react";
+import { lazy, memo, startTransition, Suspense, useEffect, useState } from "react";
 
 import { TypingIndicator } from "@web-speed-hackathon-2026/client/src/components/crok/TypingIndicator";
 import { CrokLogo } from "@web-speed-hackathon-2026/client/src/components/foundation/CrokLogo";
@@ -25,6 +25,20 @@ const UserMessage = memo(({ content }: { content: string }) => {
 
 const AssistantMessage = memo(
   ({ content, isStreaming }: { content: string; isStreaming: boolean }) => {
+    // Use startTransition to defer heavy markdown rendering so it doesn't block TBT
+    const [showMarkdown, setShowMarkdown] = useState(false);
+
+    useEffect(() => {
+      if (!isStreaming && content) {
+        // Defer markdown rendering via startTransition so the main thread stays responsive
+        startTransition(() => {
+          setShowMarkdown(true);
+        });
+      } else {
+        setShowMarkdown(false);
+      }
+    }, [isStreaming, content]);
+
     return (
       <div className="mb-6 flex gap-4">
         <div className="h-8 w-8 shrink-0">
@@ -34,12 +48,12 @@ const AssistantMessage = memo(
           <div className="text-cax-text mb-1 text-sm font-medium">Crok</div>
           <div className="markdown text-cax-text max-w-none">
             {content ? (
-              isStreaming ? (
-                <p className="whitespace-pre-wrap">{content}</p>
-              ) : (
+              showMarkdown ? (
                 <Suspense fallback={<p className="whitespace-pre-wrap">{content}</p>}>
                   <LazyMarkdownRenderer content={content} />
                 </Suspense>
+              ) : (
+                <p className="whitespace-pre-wrap">{content}</p>
               )
             ) : (
               <TypingIndicator />
@@ -51,11 +65,11 @@ const AssistantMessage = memo(
   },
 );
 
-export const ChatMessage = ({ message, isLastAssistant, isStreaming }: Props) => {
+export const ChatMessage = memo(({ message, isLastAssistant, isStreaming }: Props) => {
   if (message.role === "user") {
     return <UserMessage content={message.content} />;
   }
   return (
     <AssistantMessage content={message.content} isStreaming={!!(isLastAssistant && isStreaming)} />
   );
-};
+});

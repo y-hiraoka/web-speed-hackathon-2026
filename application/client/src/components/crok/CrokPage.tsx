@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { memo, useRef } from "react";
 
 import { ChatInput } from "@web-speed-hackathon-2026/client/src/components/crok/ChatInput";
 import { ChatMessage } from "@web-speed-hackathon-2026/client/src/components/crok/ChatMessage";
@@ -12,7 +12,7 @@ interface Props {
   onSendMessage: (message: string) => void;
 }
 
-export const CrokPage = ({ messages, isStreaming, onSendMessage }: Props) => {
+export const CrokPage = memo(({ messages, isStreaming, onSendMessage }: Props) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const stickyBarRef = useRef<HTMLDivElement>(null);
   const showScrollButton = useHasContentBelow(messagesEndRef, stickyBarRef);
@@ -55,4 +55,4 @@ export const CrokPage = ({ messages, isStreaming, onSendMessage }: Props) => {
       </div>
     </div>
   );
-};
+});
