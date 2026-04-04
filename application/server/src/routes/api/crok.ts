@@ -4,6 +4,14 @@ import { fileURLToPath } from "node:url";
 
 import { Router } from "express";
 import httpErrors from "http-errors";
+import rehypeHighlight from "rehype-highlight";
+import rehypeKatex from "rehype-katex";
+import rehypeStringify from "rehype-stringify";
+import remarkGfm from "remark-gfm";
+import remarkMath from "remark-math";
+import remarkParse from "remark-parse";
+import remarkRehype from "remark-rehype";
+import { unified } from "unified";
 
 import { QaSuggestion } from "@web-speed-hackathon-2026/server/src/models";
 import {
@@ -15,7 +23,18 @@ import { getTokenizer } from "@web-speed-hackathon-2026/server/src/utils/kuromoj
 export const crokRouter = Router();
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const response = fs.readFileSync(path.join(__dirname, "crok-response.md"), "utf-8");
+const markdownSource = fs.readFileSync(path.join(__dirname, "crok-response.md"), "utf-8");
+
+const response = unified()
+  .use(remarkParse)
+  .use(remarkMath)
+  .use(remarkGfm)
+  .use(remarkRehype)
+  .use(rehypeKatex)
+  .use(rehypeHighlight, { detect: false })
+  .use(rehypeStringify)
+  .processSync(markdownSource)
+  .toString();
 
 crokRouter.get("/crok/suggestions/search", async (req, res) => {
   const q = req.query["q"];
@@ -58,10 +77,13 @@ crokRouter.get("/crok", async (req, res) => {
   // TTFT (Time to First Token)
   await sleep(3000);
 
-  for (const char of response) {
+  const chunkSize = Math.ceil(response.length / markdownSource.length);
+
+  for (let i = 0; i < response.length; i += chunkSize) {
     if (res.closed) break;
 
-    const data = JSON.stringify({ text: char, done: false });
+    const chunk = response.slice(i, i + chunkSize);
+    const data = JSON.stringify({ text: chunk, done: false });
     res.write(`event: message\nid: ${messageId++}\ndata: ${data}\n\n`);
 
     await sleep(10);
