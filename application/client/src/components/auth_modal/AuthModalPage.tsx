@@ -19,16 +19,19 @@ export const AuthModalPage = memo(({ onRequestCloseModal, onSubmit }: Props) => 
   const [validationErrors, setValidationErrors] = useState<Partial<Record<string, string>>>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
 
-  const usernameRef = useRef<HTMLInputElement>(null);
-  const nameRef = useRef<HTMLInputElement>(null);
-  const passwordRef = useRef<HTMLInputElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
 
   const getValues = useCallback((): AuthFormData => {
+    const form = formRef.current;
+    if (!form) {
+      return { type, username: "", name: "", password: "" };
+    }
+    const formData = new FormData(form);
     return {
       type,
-      username: usernameRef.current?.value ?? "",
-      name: nameRef.current?.value ?? "",
-      password: passwordRef.current?.value ?? "",
+      username: (formData.get("username") as string) ?? "",
+      name: (formData.get("name") as string) ?? "",
+      password: (formData.get("password") as string) ?? "",
     };
   }, [type]);
 
@@ -65,7 +68,7 @@ export const AuthModalPage = memo(({ onRequestCloseModal, onSubmit }: Props) => 
   );
 
   return (
-    <form className="grid gap-y-6" onSubmit={handleSubmit}>
+    <form ref={formRef} className="grid gap-y-6" onSubmit={handleSubmit}>
       <h2 className="text-center text-2xl font-bold">
         {type === "signin" ? "サインイン" : "新規登録"}
       </h2>
@@ -86,7 +89,6 @@ export const AuthModalPage = memo(({ onRequestCloseModal, onSubmit }: Props) => 
           label="ユーザー名"
           leftItem={<span className="text-cax-text-subtle leading-none">@</span>}
           autoComplete="username"
-          ref={usernameRef}
           onBlur={() => handleBlur("username")}
           touched={!!touched["username"]}
           error={validationErrors["username"]}
@@ -97,7 +99,6 @@ export const AuthModalPage = memo(({ onRequestCloseModal, onSubmit }: Props) => 
             name="name"
             label="名前"
             autoComplete="nickname"
-            ref={nameRef}
             onBlur={() => handleBlur("name")}
             touched={!!touched["name"]}
             error={validationErrors["name"]}
@@ -109,7 +110,6 @@ export const AuthModalPage = memo(({ onRequestCloseModal, onSubmit }: Props) => 
           label="パスワード"
           type="password"
           autoComplete={type === "signup" ? "new-password" : "current-password"}
-          ref={passwordRef}
           onBlur={() => handleBlur("password")}
           touched={!!touched["password"]}
           error={validationErrors["password"]}
