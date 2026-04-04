@@ -65,22 +65,30 @@ function faIcon(iconType: string): string {
   return `<svg class="font-awesome inline-block fill-current leading-none"><use href="/sprites/font-awesome/solid.svg#${iconType}"></use></svg>`;
 }
 
-// Generate the navigation sidebar HTML (unauthenticated state - no DM, no post, no mypage, no crok)
+// Generate the navigation sidebar HTML (unauthenticated state)
 function generateNavHtml(): string {
-  const items = [
+  const linkClass = "hover:bg-cax-brand-soft flex h-12 w-12 flex-col items-center justify-center rounded-full sm:h-auto sm:w-24 sm:rounded-sm sm:px-2 lg:h-auto lg:w-auto lg:flex-row lg:justify-start lg:rounded-full lg:px-4 lg:py-2";
+  const iconClass = "relative text-xl lg:pr-2 lg:text-3xl";
+  const textClass = "hidden sm:inline sm:text-sm lg:text-xl lg:font-bold";
+
+  const linkItems = [
     { href: "/", icon: faIcon("home"), text: "ホーム" },
     { href: "/search", icon: faIcon("search"), text: "検索" },
-    { href: "/terms", icon: faIcon("balance-scale"), text: "利用規約" },
   ];
 
-  const listItems = items
+  const listItems = linkItems
     .map(
       (item) =>
-        `<li><a class="hover:bg-cax-brand-soft flex h-12 w-12 flex-col items-center justify-center rounded-full sm:h-auto sm:w-24 sm:rounded-sm sm:px-2 lg:h-auto lg:w-auto lg:flex-row lg:justify-start lg:rounded-full lg:px-4 lg:py-2" href="${item.href}"><span class="relative text-xl lg:pr-2 lg:text-3xl">${item.icon}</span><span class="hidden sm:inline sm:text-sm lg:text-xl lg:font-bold">${item.text}</span></a></li>`,
+        `<li><a class="${linkClass}" href="${item.href}"><span class="${iconClass}">${item.icon}</span><span class="${textClass}">${item.text}</span></a></li>`,
     )
     .join("");
 
-  return `<nav class="border-cax-border bg-cax-surface fixed right-0 bottom-0 left-0 z-10 h-12 border-t lg:relative lg:h-full lg:w-48 lg:border-t-0 lg:border-r"><div class="relative grid grid-flow-col items-center justify-evenly lg:fixed lg:flex lg:h-full lg:w-48 lg:flex-col lg:justify-between lg:p-2"><ul class="grid grid-flow-col items-center justify-evenly lg:grid-flow-row lg:auto-rows-min lg:justify-start lg:gap-2">${listItems}</ul></div></nav>`;
+  // "サインイン" button (shown for unauthenticated users, matching Navigation.tsx order)
+  const signInItem = `<li><button class="${linkClass}" type="button"><span class="${iconClass}">${faIcon("sign-in-alt")}</span><span class="${textClass}">サインイン</span></button></li>`;
+
+  const termsItem = `<li><a class="${linkClass}" href="/terms"><span class="${iconClass}">${faIcon("balance-scale")}</span><span class="${textClass}">利用規約</span></a></li>`;
+
+  return `<nav class="border-cax-border bg-cax-surface fixed right-0 bottom-0 left-0 z-10 h-12 border-t lg:relative lg:h-full lg:w-48 lg:border-t-0 lg:border-r"><div class="relative grid grid-flow-col items-center justify-evenly lg:fixed lg:flex lg:h-full lg:w-48 lg:flex-col lg:justify-between lg:p-2"><ul class="grid grid-flow-col items-center justify-evenly lg:grid-flow-row lg:auto-rows-min lg:justify-start lg:gap-2">${listItems}${signInItem}${termsItem}</ul></div></nav>`;
 }
 
 // Wrap content in the app shell layout
