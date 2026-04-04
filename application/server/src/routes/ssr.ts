@@ -298,7 +298,6 @@ ssrRouter.get("/{*splat}", async (req, res, next) => {
       if (post != null) {
         pageContent = generatePostHtml(post.toJSON());
       }
-    }
     } else if (url === "/search" || url.startsWith("/search?")) {
       // Search page: render search form
       pageContent = generateSearchHtml();
