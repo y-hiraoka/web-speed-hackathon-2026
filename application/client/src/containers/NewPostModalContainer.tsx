@@ -1,6 +1,5 @@
-import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useState } from "react";
 
-import { Modal } from "@web-speed-hackathon-2026/client/src/components/modal/Modal";
 import { NewPostModalPage } from "@web-speed-hackathon-2026/client/src/components/new_post_modal/NewPostModalPage";
 import { sendFile, sendJSON } from "@web-speed-hackathon-2026/client/src/utils/fetchers";
 
@@ -25,28 +24,24 @@ async function sendNewPost({ images, movie, sound, text }: SubmitParams): Promis
 }
 
 interface Props {
-  id: string;
+  dialogId: string;
 }
 
-export const NewPostModalContainer = ({ id }: Props) => {
-  const dialogId = useId();
-  const ref = useRef<HTMLDialogElement>(null);
+export const NewPostModalContainer = ({ dialogId }: Props) => {
+  const headingId = useId();
   const [resetKey, setResetKey] = useState(0);
   useEffect(() => {
-    const element = ref.current;
-    if (element == null) {
-      return;
-    }
+    const element = document.getElementById(dialogId) as HTMLDialogElement | null;
+    if (element == null) return;
 
     const handleClose = () => {
-      // モーダルが閉じたときにkeyを更新し、次回開くときフォームの状態をリセットする
       setResetKey((key) => key + 1);
     };
     element.addEventListener("close", handleClose);
     return () => {
       element.removeEventListener("close", handleClose);
     };
-  }, []);
+  }, [dialogId]);
 
   const [hasError, setHasError] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -59,7 +54,7 @@ export const NewPostModalContainer = ({ id }: Props) => {
     try {
       setIsLoading(true);
       await sendNewPost(params);
-      ref.current?.close();
+      (document.getElementById(dialogId) as HTMLDialogElement | null)?.close();
       // Stay on the current page and reload so the timeline refreshes with the new post.
       // The scoring tool expects to find the new article on the same page (/).
       window.location.reload();
@@ -71,15 +66,13 @@ export const NewPostModalContainer = ({ id }: Props) => {
   }, []);
 
   return (
-    <Modal aria-labelledby={dialogId} id={id} ref={ref} closedby="any">
-      <NewPostModalPage
-        key={resetKey}
-        id={dialogId}
-        hasError={hasError}
-        isLoading={isLoading}
-        onResetError={handleResetError}
-        onSubmit={handleSubmit}
-      />
-    </Modal>
+    <NewPostModalPage
+      key={resetKey}
+      id={headingId}
+      hasError={hasError}
+      isLoading={isLoading}
+      onResetError={handleResetError}
+      onSubmit={handleSubmit}
+    />
   );
 };

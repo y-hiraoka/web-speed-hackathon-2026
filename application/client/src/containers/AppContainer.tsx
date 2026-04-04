@@ -2,12 +2,14 @@ import { lazy, Suspense, useCallback, useEffect, useId, useState, useTransition 
 import { Route, Routes, useLocation, useNavigate } from "react-router";
 
 import { AppPage } from "@web-speed-hackathon-2026/client/src/components/application/AppPage";
-import { AuthModalContainer } from "@web-speed-hackathon-2026/client/src/containers/AuthModalContainer";
 import { NotFoundContainer } from "@web-speed-hackathon-2026/client/src/containers/NotFoundContainer";
-import { TimelineContainer } from "@web-speed-hackathon-2026/client/src/containers/TimelineContainer";
 import { fetchJSON, sendJSON } from "@web-speed-hackathon-2026/client/src/utils/fetchers";
-import { NewPostModalContainer } from "@web-speed-hackathon-2026/client/src/containers/NewPostModalContainer";
 
+const TimelineContainer = lazy(() =>
+  import("@web-speed-hackathon-2026/client/src/containers/TimelineContainer").then((m) => ({
+    default: m.TimelineContainer,
+  })),
+);
 const CrokContainer = lazy(() =>
   import("@web-speed-hackathon-2026/client/src/containers/CrokContainer").then((m) => ({
     default: m.CrokContainer,
@@ -41,6 +43,16 @@ const TermContainer = lazy(() =>
 const UserProfileContainer = lazy(() =>
   import("@web-speed-hackathon-2026/client/src/containers/UserProfileContainer").then((m) => ({
     default: m.UserProfileContainer,
+  })),
+);
+const AuthModalContainer = lazy(() =>
+  import("@web-speed-hackathon-2026/client/src/containers/AuthModalContainer").then((m) => ({
+    default: m.AuthModalContainer,
+  })),
+);
+const NewPostModalContainer = lazy(() =>
+  import("@web-speed-hackathon-2026/client/src/containers/NewPostModalContainer").then((m) => ({
+    default: m.NewPostModalContainer,
   })),
 );
 
@@ -125,8 +137,25 @@ export const AppContainer = () => {
         </Suspense>
       </AppPage>
 
-      <AuthModalContainer id={authModalId} onUpdateActiveUser={handleUpdateActiveUser} />
-      <NewPostModalContainer id={newPostModalId} />
+      <dialog
+        className="backdrop:bg-cax-overlay/50 bg-cax-surface fixed inset-0 m-auto w-full max-w-[calc(min(var(--container-md),100%)-var(--spacing)*4)] rounded-lg p-4"
+        id={authModalId}
+        onClick={(e) => { if (e.target === e.currentTarget) e.currentTarget.close(); }}
+      >
+        <Suspense fallback={null}>
+          <AuthModalContainer dialogId={authModalId} onUpdateActiveUser={handleUpdateActiveUser} />
+        </Suspense>
+      </dialog>
+      <dialog
+        aria-label="新規投稿"
+        className="backdrop:bg-cax-overlay/50 bg-cax-surface fixed inset-0 m-auto w-full max-w-[calc(min(var(--container-md),100%)-var(--spacing)*4)] rounded-lg p-4"
+        id={newPostModalId}
+        onClick={(e) => { if (e.target === e.currentTarget) e.currentTarget.close(); }}
+      >
+        <Suspense fallback={null}>
+          <NewPostModalContainer dialogId={newPostModalId} />
+        </Suspense>
+      </dialog>
     </>
   );
 };

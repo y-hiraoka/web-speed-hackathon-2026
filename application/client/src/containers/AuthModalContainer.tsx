@@ -1,12 +1,11 @@
-import { memo, useCallback, useEffect, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useState } from "react";
 
 import { AuthFormData } from "@web-speed-hackathon-2026/client/src/auth/types";
 import { AuthModalPage } from "@web-speed-hackathon-2026/client/src/components/auth_modal/AuthModalPage";
-import { Modal } from "@web-speed-hackathon-2026/client/src/components/modal/Modal";
 import { sendJSON } from "@web-speed-hackathon-2026/client/src/utils/fetchers";
 
 interface Props {
-  id: string;
+  dialogId: string;
   onUpdateActiveUser: (user: Models.User) => void;
 }
 
@@ -38,26 +37,25 @@ function getErrorCode(err: ErrorResponse, type: "signin" | "signup"): string {
   return ERROR_MESSAGES[responseJSON.code]!;
 }
 
-export const AuthModalContainer = memo(({ id, onUpdateActiveUser }: Props) => {
-  const ref = useRef<HTMLDialogElement>(null);
+export const AuthModalContainer = memo(({ dialogId, onUpdateActiveUser }: Props) => {
   const [resetKey, setResetKey] = useState(0);
   useEffect(() => {
-    if (!ref.current) return;
-    const element = ref.current;
+    const element = document.getElementById(dialogId) as HTMLDialogElement | null;
+    if (!element) return;
 
     const handleClose = () => {
-      // モーダルが閉じたときにkeyを更新し、次回開くときフォームの状態をリセットする
       setResetKey((key) => key + 1);
     };
     element.addEventListener("close", handleClose);
     return () => {
       element.removeEventListener("close", handleClose);
     };
-  }, [ref, setResetKey]);
+  }, [dialogId]);
 
   const handleRequestCloseModal = useCallback(() => {
-    ref.current?.close();
-  }, [ref]);
+    const element = document.getElementById(dialogId) as HTMLDialogElement | null;
+    element?.close();
+  }, [dialogId]);
 
   const handleSubmit = useCallback(
     async (values: AuthFormData): Promise<string | null> => {
@@ -79,12 +77,10 @@ export const AuthModalContainer = memo(({ id, onUpdateActiveUser }: Props) => {
   );
 
   return (
-    <Modal id={id} ref={ref} closedby="any">
-      <AuthModalPage
-        key={resetKey}
-        onRequestCloseModal={handleRequestCloseModal}
-        onSubmit={handleSubmit}
-      />
-    </Modal>
+    <AuthModalPage
+      key={resetKey}
+      onRequestCloseModal={handleRequestCloseModal}
+      onSubmit={handleSubmit}
+    />
   );
 });
