@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 
 import { AuthFormData } from "@web-speed-hackathon-2026/client/src/auth/types";
 import { AuthModalPage } from "@web-speed-hackathon-2026/client/src/components/auth_modal/AuthModalPage";
@@ -38,7 +38,7 @@ function getErrorCode(err: ErrorResponse, type: "signin" | "signup"): string {
   return ERROR_MESSAGES[responseJSON.code]!;
 }
 
-export const AuthModalContainer = ({ id, onUpdateActiveUser }: Props) => {
+export const AuthModalContainer = memo(({ id, onUpdateActiveUser }: Props) => {
   const ref = useRef<HTMLDialogElement>(null);
   const [resetKey, setResetKey] = useState(0);
   useEffect(() => {
@@ -87,4 +87,4 @@ export const AuthModalContainer = ({ id, onUpdateActiveUser }: Props) => {
       />
     </Modal>
   );
-};
+});

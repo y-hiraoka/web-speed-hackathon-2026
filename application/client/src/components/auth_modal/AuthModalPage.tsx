@@ -1,4 +1,4 @@
-import { FormEvent, useCallback, useRef, useState } from "react";
+import { FormEvent, memo, useCallback, useRef, useState } from "react";
 
 import { AuthFormData } from "@web-speed-hackathon-2026/client/src/auth/types";
 import { validate } from "@web-speed-hackathon-2026/client/src/auth/validation";
@@ -12,7 +12,7 @@ interface Props {
   onSubmit: (values: AuthFormData) => Promise<string | null>;
 }
 
-export const AuthModalPage = ({ onRequestCloseModal, onSubmit }: Props) => {
+export const AuthModalPage = memo(({ onRequestCloseModal, onSubmit }: Props) => {
   const [type, setType] = useState<"signin" | "signup">("signin");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -132,4 +132,4 @@ export const AuthModalPage = ({ onRequestCloseModal, onSubmit }: Props) => {
       <ModalErrorMessage>{error}</ModalErrorMessage>
     </form>
   );
-};
+});

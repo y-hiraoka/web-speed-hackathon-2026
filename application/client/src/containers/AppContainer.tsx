@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useEffect, useId, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useId, useState, useTransition } from "react";
 import { Route, Routes, useLocation, useNavigate } from "react-router";
 
 import { AppPage } from "@web-speed-hackathon-2026/client/src/components/application/AppPage";
@@ -61,6 +61,7 @@ export const AppContainer = () => {
   const [activeUser, setActiveUser] = useState<Models.User | null>(
     hasInitialMe ? initialData.me : null,
   );
+  const [, startTransition] = useTransition();
   useEffect(() => {
     if (hasInitialMe) {
       return;
@@ -73,14 +74,23 @@ export const AppContainer = () => {
         })
       : fetchJSON<Models.User>("/api/v1/me");
     void mePromise.then((user) => {
-      setActiveUser(user);
+      startTransition(() => {
+        setActiveUser(user);
+      });
     });
   }, [setActiveUser, hasInitialMe]);
   const handleLogout = useCallback(async () => {
     await sendJSON("/api/v1/signout", {});
-    setActiveUser(null);
+    startTransition(() => {
+      setActiveUser(null);
+    });
     navigate("/");
   }, [navigate]);
+  const handleUpdateActiveUser = useCallback((user: Models.User) => {
+    startTransition(() => {
+      setActiveUser(user);
+    });
+  }, []);
 
   const authModalId = useId();
   const newPostModalId = useId();
@@ -119,7 +129,7 @@ export const AppContainer = () => {
         </Suspense>
       </AppPage>
 
-      <AuthModalContainer id={authModalId} onUpdateActiveUser={setActiveUser} />
+      <AuthModalContainer id={authModalId} onUpdateActiveUser={handleUpdateActiveUser} />
       <Suspense fallback={null}>
         <NewPostModalContainer id={newPostModalId} />
       </Suspense>

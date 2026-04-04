@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { memo, useState } from "react";
 
 import { getProfileImagePath } from "@web-speed-hackathon-2026/client/src/utils/get_path";
 
@@ -7,7 +7,7 @@ interface Props {
   onLogout: () => void;
 }
 
-export const AccountMenu = ({ user, onLogout }: Props) => {
+export const AccountMenu = memo(({ user, onLogout }: Props) => {
   const [open, setOpen] = useState(false);
 
   return (
@@ -54,4 +54,4 @@ export const AccountMenu = ({ user, onLogout }: Props) => {
       </button>
     </div>
   );
-};
+});
