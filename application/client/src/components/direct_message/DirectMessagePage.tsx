@@ -1,5 +1,6 @@
 import {
   ChangeEvent,
+  memo,
   useCallback,
   useId,
   useRef,
@@ -13,6 +14,33 @@ import { FontAwesomeIcon } from "@web-speed-hackathon-2026/client/src/components
 import { DirectMessageFormData } from "@web-speed-hackathon-2026/client/src/direct_message/types";
 import { getProfileImagePath } from "@web-speed-hackathon-2026/client/src/utils/get_path";
 
+const timeFormatter = new Intl.DateTimeFormat("ja", {
+  hour: "2-digit",
+  minute: "2-digit",
+  hour12: false,
+});
+
+const MessageItem = memo(({ message, isActiveUserSend }: { message: Models.DirectMessage; isActiveUserSend: boolean }) => (
+  <li
+    className={`flex w-full flex-col ${isActiveUserSend ? "items-end" : "items-start"}`}
+  >
+    <p
+      className={`max-w-3/4 rounded-xl border px-4 py-2 text-sm leading-relaxed wrap-anywhere whitespace-pre-wrap ${isActiveUserSend ? "bg-cax-brand text-cax-surface-raised rounded-br-sm border-transparent" : "border-cax-border bg-cax-surface text-cax-text rounded-bl-sm"}`}
+    >
+      {message.body}
+    </p>
+    <div className="flex gap-1 text-xs">
+      <time dateTime={message.createdAt}>
+        {timeFormatter.format(new Date(message.createdAt))}
+      </time>
+      {isActiveUserSend && message.isRead && (
+        <span className="text-cax-text-muted">既読</span>
+      )}
+    </div>
+  </li>
+));
+MessageItem.displayName = "MessageItem";
+
 interface Props {
   conversationError: Error | null;
   conversation: Models.DirectMessageConversation;
@@ -22,12 +50,6 @@ interface Props {
   onTyping: () => void;
   onSubmit: (params: DirectMessageFormData) => Promise<void>;
 }
-
-const timeFormatter = new Intl.DateTimeFormat("ja", {
-  hour: "2-digit",
-  minute: "2-digit",
-  hour12: false,
-});
 
 export const DirectMessagePage = ({
   conversationError,
@@ -47,7 +69,6 @@ export const DirectMessagePage = ({
   const [text, setText] = useState("");
   const textAreaRows = Math.min((text || "").split("\n").length, 5);
   const isInvalid = text.trim().length === 0;
-  const scrollHeightRef = useRef(0);
 
   const handleChange = useCallback(
     (event: ChangeEvent<HTMLTextAreaElement>) => {
@@ -77,30 +98,14 @@ export const DirectMessagePage = ({
     [onSubmit, text],
   );
 
+  // Scroll to bottom once after messages render, without continuous ResizeObserver
   useEffect(() => {
-    let rafId: number | null = null;
-
-    const observer = new ResizeObserver(() => {
-      if (rafId != null) return;
-      rafId = requestAnimationFrame(() => {
-        rafId = null;
-        const height = document.body.scrollHeight;
-        if (height !== scrollHeightRef.current) {
-          scrollHeightRef.current = height;
-          window.scrollTo(0, height);
-        }
-      });
+    // Use requestAnimationFrame to wait for layout to settle
+    const rafId = requestAnimationFrame(() => {
+      window.scrollTo(0, document.body.scrollHeight);
     });
-
-    observer.observe(document.body);
-
-    return () => {
-      observer.disconnect();
-      if (rafId != null) {
-        cancelAnimationFrame(rafId);
-      }
-    };
-  }, []);
+    return () => cancelAnimationFrame(rafId);
+  }, [conversation.messages.length]);
 
   if (conversationError != null) {
     return (
@@ -140,30 +145,13 @@ export const DirectMessagePage = ({
         )}
 
         <ul className="grid gap-3" data-testid="dm-message-list">
-          {conversation.messages.map((message) => {
-            const isActiveUserSend = message.sender.id === activeUser.id;
-
-            return (
-              <li
-                key={message.id}
-                className={`flex w-full flex-col ${isActiveUserSend ? "items-end" : "items-start"}`}
-              >
-                <p
-                  className={`max-w-3/4 rounded-xl border px-4 py-2 text-sm leading-relaxed wrap-anywhere whitespace-pre-wrap ${isActiveUserSend ? "bg-cax-brand text-cax-surface-raised rounded-br-sm border-transparent" : "border-cax-border bg-cax-surface text-cax-text rounded-bl-sm"}`}
-                >
-                  {message.body}
-                </p>
-                <div className="flex gap-1 text-xs">
-                  <time dateTime={message.createdAt}>
-                    {timeFormatter.format(new Date(message.createdAt))}
-                  </time>
-                  {isActiveUserSend && message.isRead && (
-                    <span className="text-cax-text-muted">既読</span>
-                  )}
-                </div>
-              </li>
-            );
-          })}
+          {conversation.messages.map((message) => (
+            <MessageItem
+              key={message.id}
+              message={message}
+              isActiveUserSend={message.sender.id === activeUser.id}
+            />
+          ))}
         </ul>
       </div>
 

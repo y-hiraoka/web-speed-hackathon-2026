@@ -61,7 +61,11 @@ export const DirectMessageContainer = ({ activeUser, authModalId }: Props) => {
 
   useEffect(() => {
     void loadConversation();
-    void sendRead();
+    // Debounce sendRead to avoid blocking the main thread on page load
+    const timer = setTimeout(() => {
+      void sendRead();
+    }, 1000);
+    return () => clearTimeout(timer);
   }, [loadConversation, sendRead]);
 
   const handleSubmit = useCallback(

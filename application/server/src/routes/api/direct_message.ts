@@ -183,7 +183,7 @@ directMessageRouter.get("/dm/:conversationId", async (req, res) => {
     where: { conversationId: conversation.id },
     include: [{ association: "sender", include: [{ association: "profileImage" }] }],
     order: [["createdAt", "DESC"]],
-    limit: 100,
+    limit: 30,
   });
   messages.reverse();
 
