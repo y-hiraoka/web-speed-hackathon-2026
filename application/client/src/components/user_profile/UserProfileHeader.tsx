@@ -1,7 +1,6 @@
-import moment from "moment";
-
 import { FontAwesomeIcon } from "@web-speed-hackathon-2026/client/src/components/foundation/FontAwesomeIcon";
 import { getProfileImagePath } from "@web-speed-hackathon-2026/client/src/utils/get_path";
+import { formatLongDate } from "@web-speed-hackathon-2026/client/src/utils/format_date";
 
 interface Props {
   user: Models.User;
@@ -29,8 +28,8 @@ export const UserProfileHeader = ({ user }: Props) => {
             <FontAwesomeIcon iconType="calendar-alt" styleType="regular" />
           </span>
           <span>
-            <time dateTime={moment(user.createdAt).toISOString()}>
-              {moment(user.createdAt).locale("ja").format("LL")}
+            <time dateTime={new Date(user.createdAt).toISOString()}>
+              {formatLongDate(user.createdAt)}
             </time>
             からサービスを利用しています
           </span>
