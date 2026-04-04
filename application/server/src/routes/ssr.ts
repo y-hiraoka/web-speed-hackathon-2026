@@ -14,7 +14,31 @@ let htmlTemplate: string | null = null;
 function getHtmlTemplate(): string {
   if (htmlTemplate == null) {
     const htmlPath = path.join(CLIENT_DIST_PATH, "index.html");
-    htmlTemplate = fs.readFileSync(htmlPath, "utf-8");
+    let html = fs.readFileSync(htmlPath, "utf-8");
+
+    // Inline the main CSS file to avoid render-blocking external stylesheet
+    const mainCssMatch = html.match(/<link rel="stylesheet" crossorigin href="(\/assets\/index-[^"]+\.css)">/);
+    if (mainCssMatch) {
+      const cssFilePath = path.join(CLIENT_DIST_PATH, mainCssMatch[1]!);
+      if (fs.existsSync(cssFilePath)) {
+        const cssContent = fs.readFileSync(cssFilePath, "utf-8");
+        // Replace the <link> tag with an inline <style> tag
+        html = html.replace(mainCssMatch[0], `<style>${cssContent}</style>`);
+      }
+    }
+
+    // Make KaTeX CSS load asynchronously (not needed for initial render)
+    const katexCssMatch = html.match(/<link rel="stylesheet" crossorigin href="(\/assets\/vendor-katex-[^"]+\.css)">/);
+    if (katexCssMatch) {
+      const katexHref = katexCssMatch[1]!;
+      // Use media="print" trick for async CSS loading, with noscript fallback
+      html = html.replace(
+        katexCssMatch[0],
+        `<link rel="stylesheet" href="${katexHref}" media="print" onload="this.media='all'" crossorigin><noscript><link rel="stylesheet" href="${katexHref}" crossorigin></noscript>`,
+      );
+    }
+
+    htmlTemplate = html;
   }
   return htmlTemplate;
 }
