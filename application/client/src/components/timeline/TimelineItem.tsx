@@ -27,9 +27,10 @@ const isClickedAnchorOrButton = (target: EventTarget | null, currentTarget: Elem
  */
 interface Props {
   post: Models.Post;
+  index?: number;
 }
 
-export const TimelineItem = memo(function TimelineItem({ post }: Props) {
+export const TimelineItem = memo(function TimelineItem({ post, index }: Props) {
   const navigate = useNavigate();
 
   /**
@@ -45,6 +46,8 @@ export const TimelineItem = memo(function TimelineItem({ post }: Props) {
     [post, navigate],
   );
 
+  const isAboveFold = index != null && index < 2;
+
   return (
     <article className="hover:bg-cax-surface-subtle px-1 sm:px-4" onClick={handleClick}>
       <div className="border-cax-border flex border-b px-2 pt-2 pb-4 sm:px-4">
@@ -56,8 +59,9 @@ export const TimelineItem = memo(function TimelineItem({ post }: Props) {
             <img
               alt={post.user.profileImage.alt}
               decoding="async"
+              fetchPriority={isAboveFold ? "high" : undefined}
               height={64}
-              loading="lazy"
+              loading={isAboveFold ? "eager" : "lazy"}
               src={getProfileImagePath(post.user.profileImage.id)}
               width={64}
             />
@@ -93,7 +97,11 @@ export const TimelineItem = memo(function TimelineItem({ post }: Props) {
           </div>
           {post.images?.length > 0 ? (
             <div className="relative mt-2 w-full">
-              <ImageArea images={post.images} />
+              <ImageArea
+                images={post.images}
+                loading={isAboveFold ? "eager" : undefined}
+                fetchPriority={isAboveFold ? "high" : undefined}
+              />
             </div>
           ) : null}
           {post.movie ? (

@@ -4,9 +4,11 @@ import { getImagePath } from "@web-speed-hackathon-2026/client/src/utils/get_pat
 
 interface Props {
   images: Models.Image[];
+  loading?: "eager" | "lazy";
+  fetchPriority?: "high" | "low" | "auto";
 }
 
-export const ImageArea = ({ images }: Props) => {
+export const ImageArea = ({ images, loading, fetchPriority }: Props) => {
   return (
     <AspectRatioBox aspectHeight={9} aspectWidth={16}>
       <div className="border-cax-border grid h-full w-full grid-cols-2 grid-rows-2 gap-1 overflow-hidden rounded-lg border">
@@ -22,6 +24,8 @@ export const ImageArea = ({ images }: Props) => {
                 src={getImagePath(image.id, image.ext)}
                 width={image.width}
                 height={image.height}
+                loading={loading}
+                fetchPriority={fetchPriority}
               />
             </div>
           );
