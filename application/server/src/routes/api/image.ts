@@ -7,6 +7,7 @@ import httpErrors from "http-errors";
 import sharp from "sharp";
 import { v4 as uuidv4 } from "uuid";
 
+import { Image } from "@web-speed-hackathon-2026/server/src/models";
 import { UPLOAD_PATH } from "@web-speed-hackathon-2026/server/src/paths";
 
 export const imageRouter = Router();
@@ -102,6 +103,9 @@ imageRouter.post("/images", async (req, res) => {
   if (!alt && metadata.format === "tiff") {
     alt = extractAltFromTiff(req.body as Buffer);
   }
+
+  // Save image record to DB so it can be associated with posts
+  await Image.create({ id: imageId, ext, width, height, alt } as any);
 
   return res.status(200).type("application/json").send({ id: imageId, ext, width, height, alt });
 });

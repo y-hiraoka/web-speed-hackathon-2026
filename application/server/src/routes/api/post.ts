@@ -1,7 +1,7 @@
 import { Router } from "express";
 import httpErrors from "http-errors";
 
-import { Comment, Post } from "@web-speed-hackathon-2026/server/src/models";
+import { Comment, Post, PostsImagesRelation } from "@web-speed-hackathon-2026/server/src/models";
 
 const DEFAULT_LIMIT = 5;
 const MAX_LIMIT = 100;
@@ -51,22 +51,28 @@ postRouter.post("/posts", async (req, res) => {
     throw new httpErrors.Unauthorized();
   }
 
+  const imageIds: string[] = Array.isArray(req.body.images)
+    ? req.body.images.map((image: { id: string }) => image.id)
+    : [];
+
   const post = await Post.create(
     {
-      ...req.body,
+      text: req.body.text,
+      movieId: req.body.movie?.id,
+      soundId: req.body.sound?.id,
       userId: req.session.userId,
-    },
-    {
-      include: [
-        {
-          association: "images",
-          through: { attributes: [] },
-        },
-        { association: "movie" },
-        { association: "sound" },
-      ],
-    },
+    } as any,
   );
+
+  // Associate existing images with the post via join table
+  if (imageIds.length > 0) {
+    await PostsImagesRelation.bulkCreate(
+      imageIds.map((imageId) => ({ imageId, postId: post.id })),
+    );
+  }
+
+  // Reload with default scope to include all associations
+  await post.reload();
 
   // Keep FTS5 index in sync with new posts
   await Post.sequelize!.query("INSERT INTO posts_fts(id, text) VALUES (:id, :text)", {
