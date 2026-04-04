@@ -52,21 +52,25 @@ movieRouter.post("/movies", async (req, res) => {
       "-r",
       "10",
       "-vf",
-      "crop='min(iw,ih)':'min(iw,ih)',scale=480:480",
+      "crop='min(iw,ih)':'min(iw,ih)',scale=360:360",
       "-c:v",
       "libx264",
       "-preset",
-      "fast",
+      "ultrafast",
       "-crf",
       "28",
       "-profile:v",
-      "main",
+      "baseline",
       "-an",
       "-movflags",
       "+faststart",
       "-y",
       outputPath,
-    ]);
+    ], { timeout: 60_000, maxBuffer: 10 * 1024 * 1024 });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Unknown ffmpeg error";
+    console.error("[movie] ffmpeg conversion failed:", message);
+    throw new httpErrors.InternalServerError(`Video conversion failed: ${message}`);
   } finally {
     await fs.unlink(tmpInput).catch(() => {});
   }
