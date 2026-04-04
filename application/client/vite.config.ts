@@ -36,6 +36,14 @@ export default defineConfig({
     emptyOutDir: true,
     target: "esnext",
     cssMinify: "lightningcss",
+    modulePreload: {
+      resolveDependencies: (filename, deps, { hostId, hostType }) => {
+        // Don't preload heavy chunks that are only needed for Crok AI chat
+        return deps.filter(
+          (dep) => !dep.includes("vendor-markdown") && !dep.includes("vendor-katex"),
+        );
+      },
+    },
     rollupOptions: {
       output: {
         manualChunks(id: string) {
