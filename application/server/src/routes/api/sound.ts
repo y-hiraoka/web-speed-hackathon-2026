@@ -9,6 +9,7 @@ import { fileTypeFromBuffer } from "file-type";
 import httpErrors from "http-errors";
 import { v4 as uuidv4 } from "uuid";
 
+import { Sound } from "@web-speed-hackathon-2026/server/src/models";
 import { PUBLIC_PATH, UPLOAD_PATH } from "@web-speed-hackathon-2026/server/src/paths";
 import { extractMetadataFromSound } from "@web-speed-hackathon-2026/server/src/utils/extract_metadata_from_sound";
 
@@ -140,6 +141,8 @@ soundRouter.post("/sounds", async (req, res) => {
       await fs.unlink(tmpInput).catch(() => {});
     }
   }
+
+  await Sound.create({ id: soundId, artist, title } as any);
 
   return res.status(200).type("application/json").send({ artist, id: soundId, title });
 });
