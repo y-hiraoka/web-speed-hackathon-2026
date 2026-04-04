@@ -195,9 +195,15 @@ ssrRouter.get("/{*splat}", async (req, res, next) => {
     // Wrap page content in the app shell (navigation + main area)
     const appHtml = wrapInAppShell(pageContent);
 
+    // For the terms page, inject font preload and inline @font-face to speed up font loading
+    let fontTags = "";
+    if (url === "/terms") {
+      fontTags = `<link rel="preload" href="/fonts/ReiNoAreMincho-Regular.woff2" as="font" type="font/woff2" crossorigin /><link rel="preload" href="/fonts/ReiNoAreMincho-Heavy.woff2" as="font" type="font/woff2" crossorigin /><style>@font-face{font-family:"Rei no Are Mincho";font-display:swap;src:url(/fonts/ReiNoAreMincho-Regular.woff2) format("woff2");font-weight:normal}@font-face{font-family:"Rei no Are Mincho";font-display:swap;src:url(/fonts/ReiNoAreMincho-Heavy.woff2) format("woff2");font-weight:bold}</style>`;
+    }
+
     // Inject initial data script before </head>
     const dataScript = `<script>window.__INITIAL_DATA__=${JSON.stringify(initialData).replace(/</g, "\\u003c")}</script>`;
-    let html = template.replace("</head>", `${dataScript}\n</head>`);
+    let html = template.replace("</head>", `${fontTags}${dataScript}\n</head>`);
 
     // Inject the SSR HTML into <div id="app">
     html = html.replace('<div id="app"></div>', `<div id="app">${appHtml}</div>`);
