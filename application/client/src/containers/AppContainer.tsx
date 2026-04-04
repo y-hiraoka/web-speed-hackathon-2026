@@ -87,9 +87,7 @@ export const AppContainer = () => {
     navigate("/");
   }, [navigate]);
   const handleUpdateActiveUser = useCallback((user: Models.User) => {
-    startTransition(() => {
-      setActiveUser(user);
-    });
+    setActiveUser(user);
   }, []);
 
   const authModalId = useId();

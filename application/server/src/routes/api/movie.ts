@@ -66,7 +66,7 @@ movieRouter.post("/movies", async (req, res) => {
       "+faststart",
       "-y",
       outputPath,
-    ], { timeout: 60_000, maxBuffer: 10 * 1024 * 1024 });
+    ], { timeout: 90_000, maxBuffer: 10 * 1024 * 1024 });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown ffmpeg error";
     console.error("[movie] ffmpeg conversion failed:", message);
