@@ -1,4 +1,5 @@
 import "@web-speed-hackathon-2026/server/src/utils/express_websocket_support";
+import "@web-speed-hackathon-2026/server/src/utils/kuromoji_tokenizer";
 import { app } from "@web-speed-hackathon-2026/server/src/app";
 
 import { initializeSequelize } from "./sequelize";

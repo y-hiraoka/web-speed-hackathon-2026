@@ -1,5 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useId } from "react";
-import { Helmet, HelmetProvider } from "react-helmet";
+
 import { Route, Routes, useLocation, useNavigate } from "react-router";
 import useSWR from "swr";
 
@@ -43,17 +43,11 @@ export const AppContainer = () => {
   const newPostModalId = useId();
 
   if (isLoadingActiveUser) {
-    return (
-      <HelmetProvider>
-        <Helmet>
-          <title>読込中 - CaX</title>
-        </Helmet>
-      </HelmetProvider>
-    );
+    return <title>読込中 - CaX</title>;
   }
 
   return (
-    <HelmetProvider>
+    <>
       <AppPage
         activeUser={activeUser}
         authModalId={authModalId}
@@ -88,6 +82,6 @@ export const AppContainer = () => {
 
       <AuthModalContainer id={authModalId} onUpdateActiveUser={(user) => mutateActiveUser(user, { revalidate: false })} />
       <NewPostModalContainer id={newPostModalId} />
-    </HelmetProvider>
+    </>
   );
 };

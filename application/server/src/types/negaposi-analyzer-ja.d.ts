@@ -9,6 +9,5 @@ declare module "negaposi-analyzer-ja" {
   }
 
   function analyze(tokens: IpadicFeatures[], options?: Options): number;
-
   export = analyze;
 }

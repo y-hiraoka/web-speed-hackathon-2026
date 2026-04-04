@@ -2,9 +2,27 @@ import { Router } from "express";
 import { Op } from "sequelize";
 
 import { Post } from "@web-speed-hackathon-2026/server/src/models";
+import { analyzeSentiment } from "@web-speed-hackathon-2026/server/src/utils/negaposi_analyzer";
 import { parseSearchQuery } from "@web-speed-hackathon-2026/server/src/utils/parse_search_query.js";
 
 export const searchRouter = Router();
+
+searchRouter.get("/search/sentiment", async (req, res) => {
+  const query = req.query["q"];
+
+  if (typeof query !== "string" || query.trim() === "") {
+    return res.json({ sentimentLabel: null });
+  }
+
+  const { keywords } = parseSearchQuery(query);
+
+  if (!keywords) {
+    return res.json({ sentimentLabel: null });
+  }
+
+  const sentimentLabel = await analyzeSentiment(keywords);
+  return res.json({ sentimentLabel });
+});
 
 searchRouter.get("/search", async (req, res) => {
   const query = req.query["q"];

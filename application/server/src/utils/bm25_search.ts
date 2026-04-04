@@ -1,5 +1,6 @@
 import { BM25 } from "bayesian-bm25";
-import type { Tokenizer, IpadicFeatures } from "kuromoji";
+import type { IpadicFeatures, Tokenizer } from "kuromoji";
+
 const STOP_POS = new Set(["助詞", "助動詞", "記号"]);
 
 /**

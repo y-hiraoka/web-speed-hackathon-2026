@@ -1,4 +1,3 @@
-import { Helmet } from "react-helmet";
 import { useParams } from "react-router";
 import useSWR from "swr";
 
@@ -22,11 +21,7 @@ export const UserProfileContainer = () => {
   );
 
   if (isLoadingUser) {
-    return (
-      <Helmet>
-        <title>読込中 - CaX</title>
-      </Helmet>
-    );
+    return <title>読込中 - CaX</title>;
   }
 
   if (error || !user) {
@@ -35,9 +30,7 @@ export const UserProfileContainer = () => {
 
   return (
     <InfiniteScroll fetchMore={fetchMore}>
-      <Helmet>
-        <title>{user.name} さんのタイムライン - CaX</title>
-      </Helmet>
+      <title>{user.name} さんのタイムライン - CaX</title>
       <UserProfilePage timeline={posts} user={user} />
     </InfiniteScroll>
   );
