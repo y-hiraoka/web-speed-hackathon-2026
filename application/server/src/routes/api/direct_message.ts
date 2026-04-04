@@ -1,6 +1,6 @@
 import { Router } from "express";
 import httpErrors from "http-errors";
-import { col, where, Op } from "sequelize";
+import { literal, Op } from "sequelize";
 
 import { eventhub } from "@web-speed-hackathon-2026/server/src/eventhub";
 import {
@@ -16,22 +16,69 @@ directMessageRouter.get("/dm", async (req, res) => {
     throw new httpErrors.Unauthorized();
   }
 
-  const conversations = await DirectMessageConversation.findAll({
+  const userId = req.session.userId;
+
+  // メッセージを含めずに会話一覧を取得
+  const conversations = await DirectMessageConversation.unscoped().findAll({
+    include: [
+      { association: "initiator", include: [{ association: "profileImage" }] },
+      { association: "member", include: [{ association: "profileImage" }] },
+    ],
     where: {
-      [Op.and]: [
-        { [Op.or]: [{ initiatorId: req.session.userId }, { memberId: req.session.userId }] },
-        where(col("messages.id"), { [Op.not]: null }),
-      ],
+      [Op.or]: [{ initiatorId: userId }, { memberId: userId }],
     },
-    order: [[col("messages.createdAt"), "DESC"]],
   });
 
-  const sorted = conversations.map((c) => ({
-    ...c.toJSON(),
-    messages: c.messages?.reverse(),
-  }));
+  if (conversations.length === 0) {
+    return res.status(200).type("application/json").send([]);
+  }
 
-  return res.status(200).type("application/json").send(sorted);
+  const conversationIds = conversations.map((conversation) => conversation.id);
+
+  // 各会話の最新メッセージを1クエリで一括取得（サブクエリで各会話の最新createdAtに一致するものを抽出）
+  const latestMessages = await DirectMessage.findAll({
+    where: {
+      conversationId: { [Op.in]: conversationIds },
+      createdAt: {
+        [Op.eq]: literal(
+          `(SELECT MAX("sub"."createdAt") FROM "DirectMessages" AS "sub" WHERE "sub"."conversationId" = "DirectMessage"."conversationId")`,
+        ),
+      },
+    },
+  });
+
+  const latestMessageByConversationId = new Map(
+    latestMessages.map((message) => [message.conversationId, message]),
+  );
+
+  // 未読メッセージがある会話IDを一括取得
+  const unreadCounts = await DirectMessage.unscoped().count({
+    where: {
+      conversationId: { [Op.in]: conversationIds },
+      senderId: { [Op.ne]: userId },
+      isRead: false,
+    },
+    group: ["conversationId"],
+  });
+  const unreadConversationIds = new Set(
+    unreadCounts.map((row) => String(row["conversationId"])),
+  );
+
+  // レスポンス組み立て
+  const result = conversations
+    .filter((conversation) => latestMessageByConversationId.has(conversation.id))
+    .map((conversation) => ({
+      ...conversation.toJSON(),
+      messages: [latestMessageByConversationId.get(conversation.id)!.toJSON()],
+      hasUnread: unreadConversationIds.has(conversation.id),
+    }))
+    .sort((a, b) => {
+      const aTime = a.messages[0]?.createdAt ?? "";
+      const bTime = b.messages[0]?.createdAt ?? "";
+      return new Date(bTime as string).getTime() - new Date(aTime as string).getTime();
+    });
+
+  return res.status(200).type("application/json").send(result);
 });
 
 directMessageRouter.post("/dm", async (req, res) => {
