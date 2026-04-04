@@ -65,7 +65,14 @@ export const AppContainer = () => {
     if (hasInitialMe) {
       return;
     }
-    void fetchJSON<Models.User>("/api/v1/me").then((user) => {
+    const prefetched = window.__PREFETCH__?.["/api/v1/me"];
+    const mePromise = prefetched
+      ? (prefetched as Promise<Models.User>).then((user) => {
+          delete window.__PREFETCH__!["/api/v1/me"];
+          return user;
+        })
+      : fetchJSON<Models.User>("/api/v1/me");
+    void mePromise.then((user) => {
       setActiveUser(user);
     });
   }, [setActiveUser, hasInitialMe]);

@@ -5,6 +5,7 @@ interface InitialData {
 
 interface Window {
   __INITIAL_DATA__?: InitialData;
+  __PREFETCH__?: Record<string, Promise<unknown>>;
 }
 
 declare namespace Models {

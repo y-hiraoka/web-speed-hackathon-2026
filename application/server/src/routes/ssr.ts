@@ -201,9 +201,25 @@ ssrRouter.get("/{*splat}", async (req, res, next) => {
       fontTags = `<link rel="preload" href="/fonts/ReiNoAreMincho-Regular.woff2" as="font" type="font/woff2" crossorigin /><link rel="preload" href="/fonts/ReiNoAreMincho-Heavy.woff2" as="font" type="font/woff2" crossorigin /><style>@font-face{font-family:"Rei no Are Mincho";font-display:swap;src:url(/fonts/ReiNoAreMincho-Regular.woff2) format("woff2");font-weight:normal}@font-face{font-family:"Rei no Are Mincho";font-display:swap;src:url(/fonts/ReiNoAreMincho-Heavy.woff2) format("woff2");font-weight:bold}</style>`;
     }
 
+    // Build prefetch URLs for this route
+    const prefetchUrls: string[] = ["/api/v1/me"];
+    if (url === "/") {
+      prefetchUrls.push("/api/v1/posts?limit=10&offset=0");
+    } else if (postMatch) {
+      const postId = postMatch[1];
+      prefetchUrls.push(`/api/v1/posts/${postId}`);
+      prefetchUrls.push(`/api/v1/posts/${postId}/comments?limit=10&offset=0`);
+    }
+
+    // Generate prefetch script that starts fetches immediately and stores promises
+    const prefetchEntries = prefetchUrls
+      .map((u) => `${JSON.stringify(u)}:fetch(${JSON.stringify(u)},{credentials:"same-origin"}).then(function(r){return r.json()}).catch(function(){return null})`)
+      .join(",");
+    const prefetchScript = `<script>window.__PREFETCH__={${prefetchEntries}}</script>`;
+
     // Inject initial data script before </head>
     const dataScript = `<script>window.__INITIAL_DATA__=${JSON.stringify(initialData).replace(/</g, "\\u003c")}</script>`;
-    let html = template.replace("</head>", `${fontTags}${dataScript}\n</head>`);
+    let html = template.replace("</head>", `${fontTags}${prefetchScript}${dataScript}\n</head>`);
 
     // Inject the SSR HTML into <div id="app">
     html = html.replace('<div id="app"></div>', `<div id="app">${appHtml}</div>`);

@@ -44,7 +44,16 @@ export function useInfiniteFetch<T>(
     const separator = apiPath.includes("?") ? "&" : "?";
     const paginatedPath = `${apiPath}${separator}limit=${LIMIT}&offset=${offset}`;
 
-    void fetcher(paginatedPath).then(
+    // Check for prefetched promise
+    const prefetched = window.__PREFETCH__?.[paginatedPath];
+    const dataPromise = prefetched
+      ? (prefetched as Promise<T[]>).then((data) => {
+          delete window.__PREFETCH__![paginatedPath];
+          return data;
+        })
+      : fetcher(paginatedPath);
+
+    void dataPromise.then(
       (data) => {
         setResult((cur) => ({
           ...cur,

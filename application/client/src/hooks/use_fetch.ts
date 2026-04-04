@@ -23,7 +23,17 @@ export function useFetch<T>(
       isLoading: true,
     }));
 
-    void fetcher(apiPath).then(
+    // Check for prefetched promise
+    const prefetched = window.__PREFETCH__?.[apiPath];
+    const dataPromise = prefetched
+      ? (prefetched as Promise<T>).then((data) => {
+          // Consume the prefetch so it's not reused on subsequent renders
+          delete window.__PREFETCH__![apiPath];
+          return data;
+        })
+      : fetcher(apiPath);
+
+    void dataPromise.then(
       (data) => {
         setResult((cur) => ({
           ...cur,
