@@ -11,6 +11,9 @@ export const ssrRouter = Router();
 // Cache the built index.html template in memory
 let htmlTemplate: string | null = null;
 
+// Cache for static route HTML (e.g. /terms) — these never change
+const staticHtmlCache = new Map<string, string>();
+
 function getHtmlTemplate(): string {
   if (htmlTemplate == null) {
     const htmlPath = path.join(CLIENT_DIST_PATH, "index.html");
@@ -155,6 +158,14 @@ ssrRouter.get("/{*splat}", async (req, res, next) => {
   }
 
   try {
+    // For static routes (no session needed), serve from cache
+    if (url === "/terms" && req.session.userId == null) {
+      const cached = staticHtmlCache.get(url);
+      if (cached) {
+        return res.status(200).type("text/html").send(cached);
+      }
+    }
+
     const template = getHtmlTemplate();
 
     // Fetch the active user from session
@@ -166,9 +177,21 @@ ssrRouter.get("/{*splat}", async (req, res, next) => {
       }
     }
 
-    // For the homepage, prefetch posts
+    // For the homepage, prefetch posts with minimal attributes for SSR
     if (url === "/") {
-      const posts = await Post.findAll({ limit: 10, offset: 0, order: [["createdAt", "DESC"]] });
+      const posts = await Post.findAll({
+        attributes: ["id", "text", "createdAt"],
+        include: [
+          {
+            association: "user",
+            attributes: ["id", "username", "name"],
+            include: [{ association: "profileImage", attributes: ["id", "alt"] }],
+          },
+        ],
+        limit: 10,
+        offset: 0,
+        order: [["createdAt", "DESC"]],
+      });
       initialData.posts = posts.map((p) => p.toJSON());
     }
 
@@ -183,9 +206,18 @@ ssrRouter.get("/{*splat}", async (req, res, next) => {
       // Terms page: render static terms content
       pageContent = generateTermsHtml();
     } else if (postMatch) {
-      // Post detail page: fetch and render the post
+      // Post detail page: fetch and render the post with minimal attributes
       const postId = postMatch[1];
-      const post = await Post.findByPk(postId);
+      const post = await Post.findByPk(postId, {
+        attributes: ["id", "text", "createdAt"],
+        include: [
+          {
+            association: "user",
+            attributes: ["id", "username", "name"],
+            include: [{ association: "profileImage", attributes: ["id", "alt"] }],
+          },
+        ],
+      });
       if (post != null) {
         pageContent = generatePostHtml(post.toJSON());
       }
@@ -223,6 +255,11 @@ ssrRouter.get("/{*splat}", async (req, res, next) => {
 
     // Inject the SSR HTML into <div id="app">
     html = html.replace('<div id="app"></div>', `<div id="app">${appHtml}</div>`);
+
+    // Cache static pages for unauthenticated users
+    if (url === "/terms" && req.session.userId == null) {
+      staticHtmlCache.set(url, html);
+    }
 
     res.status(200).type("text/html").send(html);
   } catch (err) {
