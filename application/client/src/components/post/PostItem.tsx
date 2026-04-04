@@ -1,5 +1,3 @@
-import moment from "moment";
-
 import { Link } from "@web-speed-hackathon-2026/client/src/components/foundation/Link";
 import { ImageArea } from "@web-speed-hackathon-2026/client/src/components/post/ImageArea";
 import { MovieArea } from "@web-speed-hackathon-2026/client/src/components/post/MovieArea";
@@ -23,7 +21,11 @@ export const PostItem = ({ post }: Props) => {
             >
               <img
                 alt={post.user.profileImage.alt}
+                decoding="async"
+                height={64}
+                loading="lazy"
                 src={getProfileImagePath(post.user.profileImage.id)}
+                width={64}
               />
             </Link>
           </div>
@@ -52,7 +54,7 @@ export const PostItem = ({ post }: Props) => {
           </div>
           {post.images?.length > 0 ? (
             <div className="relative mt-2 w-full">
-              <ImageArea images={post.images} />
+              <ImageArea images={post.images} loading="eager" fetchPriority="high" />
             </div>
           ) : null}
           {post.movie ? (
@@ -67,8 +69,12 @@ export const PostItem = ({ post }: Props) => {
           ) : null}
           <p className="mt-2 text-sm sm:mt-4">
             <Link className="text-cax-text-muted hover:underline" to={`/posts/${post.id}`}>
-              <time dateTime={moment(post.createdAt).toISOString()}>
-                {moment(post.createdAt).locale("ja").format("LL")}
+              <time dateTime={new Date(post.createdAt).toISOString()}>
+                {new Intl.DateTimeFormat("ja", {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                }).format(new Date(post.createdAt))}
               </time>
             </Link>
           </p>

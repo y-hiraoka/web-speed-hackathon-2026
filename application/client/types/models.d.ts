@@ -1,3 +1,13 @@
+interface InitialData {
+  me: Models.User | null;
+  posts?: Models.Post[];
+}
+
+interface Window {
+  __INITIAL_DATA__?: InitialData;
+  __PREFETCH__?: Record<string, Promise<unknown>>;
+}
+
 declare namespace Models {
   interface User {
     createdAt: string;
@@ -28,6 +38,9 @@ declare namespace Models {
   interface Image {
     alt: string;
     id: string;
+    width: number;
+    height: number;
+    ext: string;
   }
 
   interface Sound {

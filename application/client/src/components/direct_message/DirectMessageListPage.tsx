@@ -1,4 +1,3 @@
-import moment from "moment";
 import { useCallback, useEffect, useState } from "react";
 
 import { Button } from "@web-speed-hackathon-2026/client/src/components/foundation/Button";
@@ -87,7 +86,11 @@ export const DirectMessageListPage = ({ activeUser, newDmModalId }: Props) => {
                     <img
                       alt={peer.profileImage.alt}
                       className="w-12 shrink-0 self-start rounded-full"
+                      decoding="async"
+                      height={48}
+                      loading="lazy"
                       src={getProfileImagePath(peer.profileImage.id)}
+                      width={48}
                     />
                     <div className="flex flex-1 flex-col">
                       <div className="flex items-center justify-between">
@@ -100,7 +103,18 @@ export const DirectMessageListPage = ({ activeUser, newDmModalId }: Props) => {
                             className="text-cax-text-subtle text-xs"
                             dateTime={lastMessage.createdAt}
                           >
-                            {moment(lastMessage.createdAt).locale("ja").fromNow()}
+                            {(() => {
+                              const rtf = new Intl.RelativeTimeFormat("ja", { numeric: "auto" });
+                              const diff = new Date(lastMessage.createdAt).getTime() - Date.now();
+                              const absDiff = Math.abs(diff);
+                              if (absDiff < 60_000)
+                                return rtf.format(Math.round(diff / 1_000), "second");
+                              if (absDiff < 3_600_000)
+                                return rtf.format(Math.round(diff / 60_000), "minute");
+                              if (absDiff < 86_400_000)
+                                return rtf.format(Math.round(diff / 3_600_000), "hour");
+                              return rtf.format(Math.round(diff / 86_400_000), "day");
+                            })()}
                           </time>
                         )}
                       </div>

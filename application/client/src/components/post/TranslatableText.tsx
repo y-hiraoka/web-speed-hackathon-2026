@@ -3,62 +3,48 @@ import { useCallback, useState } from "react";
 import { createTranslator } from "@web-speed-hackathon-2026/client/src/utils/create_translator";
 
 type State =
-  | { type: "idle"; text: string }
+  | { type: "idle" }
   | { type: "loading" }
-  | { type: "translated"; text: string; original: string };
+  | { type: "translated"; text: string };
 
 interface Props {
   text: string;
 }
 
 export const TranslatableText = ({ text }: Props) => {
-  const [state, updateState] = useState<State>({ type: "idle", text });
+  const [state, updateState] = useState<State | null>(null);
 
   const handleClick = useCallback(() => {
-    switch (state.type) {
-      case "idle": {
-        (async () => {
-          updateState({ type: "loading" });
-          try {
-            using translator = await createTranslator({
-              sourceLanguage: "ja",
-              targetLanguage: "en",
-            });
-            const result = await translator.translate(state.text);
-
-            updateState({
-              type: "translated",
-              text: result,
-              original: state.text,
-            });
-          } catch {
-            updateState({
-              type: "translated",
-              text: "翻訳に失敗しました",
-              original: state.text,
-            });
-          }
-        })();
-        break;
-      }
-      case "translated": {
-        updateState({ type: "idle", text: state.original });
-        break;
-      }
-      default: {
-        state.type satisfies "loading";
-        break;
-      }
+    if (state === null || state.type === "idle") {
+      const original = text;
+      updateState({ type: "loading" });
+      (async () => {
+        try {
+          using translator = await createTranslator({
+            sourceLanguage: "ja",
+            targetLanguage: "en",
+          });
+          const result = await translator.translate(original);
+          updateState({ type: "translated", text: result });
+        } catch {
+          updateState({ type: "translated", text: "翻訳に失敗しました" });
+        }
+      })();
+    } else if (state.type === "translated") {
+      updateState({ type: "idle" });
     }
-  }, [state]);
+  }, [state, text]);
+
+  const displayText = state?.type === "translated" ? state.text : text;
+  const isLoading = state?.type === "loading";
 
   return (
     <>
       <p>
-        {state.type !== "loading" ? (
-          <span>{state.text}</span>
-        ) : (
+        {isLoading ? (
           <span className="bg-cax-surface-subtle text-cax-text-muted">{text}</span>
+        ) : (
+          <span>{displayText}</span>
         )}
       </p>
 
@@ -66,12 +52,12 @@ export const TranslatableText = ({ text }: Props) => {
         <button
           className="text-cax-accent disabled:text-cax-text-subtle hover:underline disabled:cursor-default"
           type="button"
-          disabled={state.type === "loading"}
+          disabled={isLoading}
           onClick={handleClick}
         >
-          {state.type === "idle" ? <span>Show Translation</span> : null}
-          {state.type === "loading" ? <span>Translating...</span> : null}
-          {state.type === "translated" ? <span>Show Original</span> : null}
+          {state === null || state.type === "idle" ? <span>Show Translation</span> : null}
+          {isLoading ? <span>Translating...</span> : null}
+          {state?.type === "translated" ? <span>Show Original</span> : null}
         </button>
       </p>
     </>

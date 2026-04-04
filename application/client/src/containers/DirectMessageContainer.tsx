@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Helmet } from "react-helmet";
 import { useParams } from "react-router";
 
 import { DirectMessageGate } from "@web-speed-hackathon-2026/client/src/components/direct_message/DirectMessageGate";
 import { DirectMessagePage } from "@web-speed-hackathon-2026/client/src/components/direct_message/DirectMessagePage";
+import { DocumentTitle } from "@web-speed-hackathon-2026/client/src/components/foundation/DocumentTitle";
 import { NotFoundContainer } from "@web-speed-hackathon-2026/client/src/containers/NotFoundContainer";
 import { DirectMessageFormData } from "@web-speed-hackathon-2026/client/src/direct_message/types";
 import { useWs } from "@web-speed-hackathon-2026/client/src/hooks/use_ws";
@@ -53,36 +53,61 @@ export const DirectMessageContainer = ({ activeUser, authModalId }: Props) => {
   }, [activeUser, conversationId]);
 
   const sendRead = useCallback(async () => {
+    if (activeUser == null) {
+      return;
+    }
     await sendJSON(`/api/v1/dm/${conversationId}/read`, {});
-  }, [conversationId]);
+  }, [activeUser, conversationId]);
 
   useEffect(() => {
     void loadConversation();
-    void sendRead();
+    // Debounce sendRead to avoid blocking the main thread on page load
+    const timer = setTimeout(() => {
+      void sendRead();
+    }, 1000);
+    return () => clearTimeout(timer);
   }, [loadConversation, sendRead]);
 
   const handleSubmit = useCallback(
     async (params: DirectMessageFormData) => {
       setIsSubmitting(true);
       try {
-        await sendJSON(`/api/v1/dm/${conversationId}/messages`, {
-          body: params.body,
+        const newMessage = await sendJSON<Models.DirectMessage>(
+          `/api/v1/dm/${conversationId}/messages`,
+          { body: params.body },
+        );
+        // Optimistically append the new message instead of refetching all
+        // Deduplicate: WebSocket handler may have already added this message
+        setConversation((prev) => {
+          if (prev == null) return prev;
+          if (prev.messages.some((m) => m.id === newMessage.id)) return prev;
+          return {
+            ...prev,
+            messages: [...prev.messages, newMessage],
+          };
         });
-        loadConversation();
       } finally {
         setIsSubmitting(false);
       }
     },
-    [conversationId, loadConversation],
+    [conversationId],
   );
 
   const handleTyping = useCallback(async () => {
     void sendJSON(`/api/v1/dm/${conversationId}/typing`, {});
   }, [conversationId]);
 
-  useWs(`/api/v1/dm/${conversationId}`, (event: DmUpdateEvent | DmTypingEvent) => {
-    if (event.type === "dm:conversation:message") {
-      void loadConversation().then(() => {
+  useWs(
+    activeUser != null ? `/api/v1/dm/${conversationId}` : null,
+    (event: DmUpdateEvent | DmTypingEvent) => {
+      if (event.type === "dm:conversation:message") {
+        // Optimistically append the incoming message
+        setConversation((prev) => {
+          if (prev == null) return prev;
+          // Avoid duplicates (e.g. if we already added it via handleSubmit)
+          if (prev.messages.some((m) => m.id === event.payload.id)) return prev;
+          return { ...prev, messages: [...prev.messages, event.payload] };
+        });
         if (event.payload.sender.id !== activeUser?.id) {
           setIsPeerTyping(false);
           if (peerTypingTimeoutRef.current !== null) {
@@ -90,18 +115,18 @@ export const DirectMessageContainer = ({ activeUser, authModalId }: Props) => {
           }
           peerTypingTimeoutRef.current = null;
         }
-      });
-      void sendRead();
-    } else if (event.type === "dm:conversation:typing") {
-      setIsPeerTyping(true);
-      if (peerTypingTimeoutRef.current !== null) {
-        clearTimeout(peerTypingTimeoutRef.current);
+        void sendRead();
+      } else if (event.type === "dm:conversation:typing") {
+        setIsPeerTyping(true);
+        if (peerTypingTimeoutRef.current !== null) {
+          clearTimeout(peerTypingTimeoutRef.current);
+        }
+        peerTypingTimeoutRef.current = setTimeout(() => {
+          setIsPeerTyping(false);
+        }, TYPING_INDICATOR_DURATION_MS);
       }
-      peerTypingTimeoutRef.current = setTimeout(() => {
-        setIsPeerTyping(false);
-      }, TYPING_INDICATOR_DURATION_MS);
-    }
-  });
+    },
+  );
 
   if (activeUser === null) {
     return (
@@ -124,9 +149,7 @@ export const DirectMessageContainer = ({ activeUser, authModalId }: Props) => {
 
   return (
     <>
-      <Helmet>
-        <title>{peer.name} さんとのダイレクトメッセージ - CaX</title>
-      </Helmet>
+      <DocumentTitle title={`${peer.name} さんとのダイレクトメッセージ - CaX`} />
       <DirectMessagePage
         conversationError={conversationError}
         conversation={conversation}

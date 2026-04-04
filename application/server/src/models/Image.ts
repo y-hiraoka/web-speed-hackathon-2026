@@ -11,6 +11,9 @@ import {
 export class Image extends Model<InferAttributes<Image>, InferCreationAttributes<Image>> {
   declare id: string;
   declare alt: string;
+  declare width: number;
+  declare height: number;
+  declare ext: string;
   declare createdAt: CreationOptional<Date>;
 }
 
@@ -20,6 +23,19 @@ export function initImage(sequelize: Sequelize) {
       alt: {
         allowNull: false,
         defaultValue: "",
+        type: DataTypes.STRING,
+      },
+      width: {
+        allowNull: false,
+        type: DataTypes.INTEGER,
+      },
+      height: {
+        allowNull: false,
+        type: DataTypes.INTEGER,
+      },
+      ext: {
+        allowNull: false,
+        defaultValue: "webp",
         type: DataTypes.STRING,
       },
       id: {

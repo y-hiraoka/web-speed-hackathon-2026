@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { memo, type ReactNode } from "react";
 
 import { Navigation } from "@web-speed-hackathon-2026/client/src/components/application/Navigation";
 
@@ -10,7 +10,7 @@ interface Props {
   onLogout: () => void;
 }
 
-export const AppPage = ({ activeUser, children, authModalId, newPostModalId, onLogout }: Props) => {
+export const AppPage = memo(({ activeUser, children, authModalId, newPostModalId, onLogout }: Props) => {
   return (
     <div className="relative z-0 flex justify-center font-sans">
       <div className="bg-cax-surface text-cax-text flex min-h-screen max-w-full">
@@ -28,4 +28,4 @@ export const AppPage = ({ activeUser, children, authModalId, newPostModalId, onL
       </div>
     </div>
   );
-};
+});

@@ -1,14 +1,14 @@
-import classNames from "classnames";
-
 import { AspectRatioBox } from "@web-speed-hackathon-2026/client/src/components/foundation/AspectRatioBox";
 import { CoveredImage } from "@web-speed-hackathon-2026/client/src/components/foundation/CoveredImage";
 import { getImagePath } from "@web-speed-hackathon-2026/client/src/utils/get_path";
 
 interface Props {
   images: Models.Image[];
+  loading?: "eager" | "lazy";
+  fetchPriority?: "high" | "low" | "auto";
 }
 
-export const ImageArea = ({ images }: Props) => {
+export const ImageArea = ({ images, loading, fetchPriority }: Props) => {
   return (
     <AspectRatioBox aspectHeight={9} aspectWidth={16}>
       <div className="border-cax-border grid h-full w-full grid-cols-2 grid-rows-2 gap-1 overflow-hidden rounded-lg border">
@@ -17,14 +17,16 @@ export const ImageArea = ({ images }: Props) => {
             <div
               key={image.id}
               // CSS Grid で表示領域を指定する
-              className={classNames("bg-cax-surface-subtle", {
-                "col-span-1": images.length !== 1,
-                "col-span-2": images.length === 1,
-                "row-span-1": images.length > 2 && (images.length !== 3 || idx !== 0),
-                "row-span-2": images.length <= 2 || (images.length === 3 && idx === 0),
-              })}
+              className={`bg-cax-surface-subtle ${images.length !== 1 ? "col-span-1" : "col-span-2"} ${images.length > 2 && (images.length !== 3 || idx !== 0) ? "row-span-1" : "row-span-2"}`}
             >
-              <CoveredImage src={getImagePath(image.id)} />
+              <CoveredImage
+                alt={image.alt}
+                src={getImagePath(image.id, image.ext)}
+                width={image.width}
+                height={image.height}
+                loading={loading}
+                fetchPriority={fetchPriority}
+              />
             </div>
           );
         })}

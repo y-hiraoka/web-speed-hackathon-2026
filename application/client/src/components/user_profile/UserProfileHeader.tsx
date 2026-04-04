@@ -1,5 +1,3 @@
-import { FastAverageColor } from "fast-average-color";
-import moment from "moment";
 import { ReactEventHandler, useCallback, useState } from "react";
 
 import { FontAwesomeIcon } from "@web-speed-hackathon-2026/client/src/components/foundation/FontAwesomeIcon";
@@ -15,10 +13,15 @@ export const UserProfileHeader = ({ user }: Props) => {
   // 画像の平均色を取得します
   /** @type {React.ReactEventHandler<HTMLImageElement>} */
   const handleLoadImage = useCallback<ReactEventHandler<HTMLImageElement>>((ev) => {
-    const fac = new FastAverageColor();
-    const { rgb } = fac.getColor(ev.currentTarget, { mode: "precision" });
-    setAverageColor(rgb);
-    fac.destroy();
+    const img = ev.currentTarget;
+    const canvas = document.createElement("canvas");
+    canvas.width = 1;
+    canvas.height = 1;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.drawImage(img, 0, 0, 1, 1);
+    const [r, g, b] = ctx.getImageData(0, 0, 1, 1).data;
+    setAverageColor(`rgb(${r}, ${g}, ${b})`);
   }, []);
 
   return (
@@ -30,8 +33,12 @@ export const UserProfileHeader = ({ user }: Props) => {
         <img
           alt=""
           crossOrigin="anonymous"
+          decoding="async"
+          height={128}
+          loading="lazy"
           onLoad={handleLoadImage}
           src={getProfileImagePath(user.profileImage.id)}
+          width={128}
         />
       </div>
       <div className="px-4 pt-20">
@@ -43,8 +50,12 @@ export const UserProfileHeader = ({ user }: Props) => {
             <FontAwesomeIcon iconType="calendar-alt" styleType="regular" />
           </span>
           <span>
-            <time dateTime={moment(user.createdAt).toISOString()}>
-              {moment(user.createdAt).locale("ja").format("LL")}
+            <time dateTime={new Date(user.createdAt).toISOString()}>
+              {new Intl.DateTimeFormat("ja", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              }).format(new Date(user.createdAt))}
             </time>
             からサービスを利用しています
           </span>

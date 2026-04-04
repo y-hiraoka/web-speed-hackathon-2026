@@ -1,14 +1,16 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { SubmissionError } from "redux-form";
+import { memo, useCallback, useEffect, useState } from "react";
 
 import { AuthFormData } from "@web-speed-hackathon-2026/client/src/auth/types";
 import { AuthModalPage } from "@web-speed-hackathon-2026/client/src/components/auth_modal/AuthModalPage";
-import { Modal } from "@web-speed-hackathon-2026/client/src/components/modal/Modal";
 import { sendJSON } from "@web-speed-hackathon-2026/client/src/utils/fetchers";
 
 interface Props {
-  id: string;
+  dialogId: string;
   onUpdateActiveUser: (user: Models.User) => void;
+}
+
+interface ErrorResponse {
+  responseJSON?: unknown;
 }
 
 const ERROR_MESSAGES: Record<string, string> = {
@@ -16,7 +18,7 @@ const ERROR_MESSAGES: Record<string, string> = {
   USERNAME_TAKEN: "ユーザー名が使われています",
 };
 
-function getErrorCode(err: JQuery.jqXHR<unknown>, type: "signin" | "signup"): string {
+function getErrorCode(err: ErrorResponse, type: "signin" | "signup"): string {
   const responseJSON = err.responseJSON;
   if (
     typeof responseJSON !== "object" ||
@@ -35,29 +37,28 @@ function getErrorCode(err: JQuery.jqXHR<unknown>, type: "signin" | "signup"): st
   return ERROR_MESSAGES[responseJSON.code]!;
 }
 
-export const AuthModalContainer = ({ id, onUpdateActiveUser }: Props) => {
-  const ref = useRef<HTMLDialogElement>(null);
+export const AuthModalContainer = memo(({ dialogId, onUpdateActiveUser }: Props) => {
   const [resetKey, setResetKey] = useState(0);
   useEffect(() => {
-    if (!ref.current) return;
-    const element = ref.current;
+    const element = document.getElementById(dialogId) as HTMLDialogElement | null;
+    if (!element) return;
 
-    const handleToggle = () => {
-      // モーダル開閉時にkeyを更新することでフォームの状態をリセットする
+    const handleClose = () => {
       setResetKey((key) => key + 1);
     };
-    element.addEventListener("toggle", handleToggle);
+    element.addEventListener("close", handleClose);
     return () => {
-      element.removeEventListener("toggle", handleToggle);
+      element.removeEventListener("close", handleClose);
     };
-  }, [ref, setResetKey]);
+  }, [dialogId]);
 
   const handleRequestCloseModal = useCallback(() => {
-    ref.current?.close();
-  }, [ref]);
+    const element = document.getElementById(dialogId) as HTMLDialogElement | null;
+    element?.close();
+  }, [dialogId]);
 
   const handleSubmit = useCallback(
-    async (values: AuthFormData) => {
+    async (values: AuthFormData): Promise<string | null> => {
       try {
         if (values.type === "signup") {
           const user = await sendJSON<Models.User>("/api/v1/signup", values);
@@ -67,23 +68,19 @@ export const AuthModalContainer = ({ id, onUpdateActiveUser }: Props) => {
           onUpdateActiveUser(user);
         }
         handleRequestCloseModal();
+        return null;
       } catch (err: unknown) {
-        const error = getErrorCode(err as JQuery.jqXHR<unknown>, values.type);
-        throw new SubmissionError({
-          _error: error,
-        });
+        return getErrorCode(err as ErrorResponse, values.type);
       }
     },
     [handleRequestCloseModal, onUpdateActiveUser],
   );
 
   return (
-    <Modal id={id} ref={ref} closedby="any">
-      <AuthModalPage
-        key={resetKey}
-        onRequestCloseModal={handleRequestCloseModal}
-        onSubmit={handleSubmit}
-      />
-    </Modal>
+    <AuthModalPage
+      key={resetKey}
+      onRequestCloseModal={handleRequestCloseModal}
+      onSubmit={handleSubmit}
+    />
   );
-};
+});

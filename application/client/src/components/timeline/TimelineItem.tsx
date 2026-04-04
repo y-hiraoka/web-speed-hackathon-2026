@@ -1,5 +1,4 @@
-import moment from "moment";
-import { MouseEventHandler, useCallback } from "react";
+import { memo, MouseEventHandler, useCallback } from "react";
 import { Link, useNavigate } from "react-router";
 
 import { ImageArea } from "@web-speed-hackathon-2026/client/src/components/post/ImageArea";
@@ -28,9 +27,10 @@ const isClickedAnchorOrButton = (target: EventTarget | null, currentTarget: Elem
  */
 interface Props {
   post: Models.Post;
+  index?: number;
 }
 
-export const TimelineItem = ({ post }: Props) => {
+export const TimelineItem = memo(function TimelineItem({ post, index }: Props) {
   const navigate = useNavigate();
 
   /**
@@ -46,6 +46,8 @@ export const TimelineItem = ({ post }: Props) => {
     [post, navigate],
   );
 
+  const isAboveFold = index != null && index < 2;
+
   return (
     <article className="hover:bg-cax-surface-subtle px-1 sm:px-4" onClick={handleClick}>
       <div className="border-cax-border flex border-b px-2 pt-2 pb-4 sm:px-4">
@@ -56,7 +58,12 @@ export const TimelineItem = ({ post }: Props) => {
           >
             <img
               alt={post.user.profileImage.alt}
+              decoding="async"
+              fetchPriority={isAboveFold ? "high" : undefined}
+              height={64}
+              loading={isAboveFold ? "eager" : "lazy"}
               src={getProfileImagePath(post.user.profileImage.id)}
+              width={64}
             />
           </Link>
         </div>
@@ -76,8 +83,12 @@ export const TimelineItem = ({ post }: Props) => {
             </Link>
             <span className="text-cax-text-muted pr-1">-</span>
             <Link className="text-cax-text-muted pr-1 hover:underline" to={`/posts/${post.id}`}>
-              <time dateTime={moment(post.createdAt).toISOString()}>
-                {moment(post.createdAt).locale("ja").format("LL")}
+              <time dateTime={new Date(post.createdAt).toISOString()}>
+                {new Intl.DateTimeFormat("ja", {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                }).format(new Date(post.createdAt))}
               </time>
             </Link>
           </p>
@@ -86,7 +97,11 @@ export const TimelineItem = ({ post }: Props) => {
           </div>
           {post.images?.length > 0 ? (
             <div className="relative mt-2 w-full">
-              <ImageArea images={post.images} />
+              <ImageArea
+                images={post.images}
+                loading={isAboveFold ? "eager" : undefined}
+                fetchPriority={isAboveFold ? "high" : undefined}
+              />
             </div>
           ) : null}
           {post.movie ? (
@@ -103,4 +118,4 @@ export const TimelineItem = ({ post }: Props) => {
       </div>
     </article>
   );
-};
+});

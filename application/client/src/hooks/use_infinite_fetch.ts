@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
-const LIMIT = 30;
+const LIMIT = 5;
 
 interface ReturnValues<T> {
   data: Array<T>;
@@ -12,16 +12,21 @@ interface ReturnValues<T> {
 export function useInfiniteFetch<T>(
   apiPath: string,
   fetcher: (apiPath: string) => Promise<T[]>,
+  initialData?: T[],
 ): ReturnValues<T> {
-  const internalRef = useRef({ isLoading: false, offset: 0 });
+  const hasInitialData = initialData != null && initialData.length > 0;
+  const internalRef = useRef({ isLoading: false, offset: hasInitialData ? initialData.length : 0 });
 
   const [result, setResult] = useState<Omit<ReturnValues<T>, "fetchMore">>({
-    data: [],
+    data: hasInitialData ? initialData : [],
     error: null,
-    isLoading: true,
+    isLoading: !hasInitialData,
   });
 
   const fetchMore = useCallback(() => {
+    if (!apiPath) {
+      return;
+    }
     const { isLoading, offset } = internalRef.current;
     if (isLoading) {
       return;
@@ -36,11 +41,23 @@ export function useInfiniteFetch<T>(
       offset,
     };
 
-    void fetcher(apiPath).then(
-      (allData) => {
+    const separator = apiPath.includes("?") ? "&" : "?";
+    const paginatedPath = `${apiPath}${separator}limit=${LIMIT}&offset=${offset}`;
+
+    // Check for prefetched promise
+    const prefetched = window.__PREFETCH__?.[paginatedPath];
+    const dataPromise = prefetched
+      ? (prefetched as Promise<T[]>).then((data) => {
+          delete window.__PREFETCH__![paginatedPath];
+          return data;
+        })
+      : fetcher(paginatedPath);
+
+    void dataPromise.then(
+      (data) => {
         setResult((cur) => ({
           ...cur,
-          data: [...cur.data, ...allData.slice(offset, offset + LIMIT)],
+          data: [...cur.data, ...data],
           isLoading: false,
         }));
         internalRef.current = {
@@ -62,7 +79,28 @@ export function useInfiniteFetch<T>(
     );
   }, [apiPath, fetcher]);
 
+  const initialDataUsedRef = useRef(hasInitialData);
+
   useEffect(() => {
+    // Skip the initial fetch if we already have SSR-provided data
+    if (initialDataUsedRef.current) {
+      initialDataUsedRef.current = false;
+      return;
+    }
+
+    if (!apiPath) {
+      setResult(() => ({
+        data: [],
+        error: null,
+        isLoading: false,
+      }));
+      internalRef.current = {
+        isLoading: false,
+        offset: 0,
+      };
+      return;
+    }
+
     setResult(() => ({
       data: [],
       error: null,
@@ -74,7 +112,7 @@ export function useInfiniteFetch<T>(
     };
 
     fetchMore();
-  }, [fetchMore]);
+  }, [apiPath, fetchMore]);
 
   return {
     ...result,

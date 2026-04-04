@@ -59,12 +59,19 @@ userRouter.get("/users/:username/posts", async (req, res) => {
     throw new httpErrors.NotFound();
   }
 
+  const DEFAULT_LIMIT = 30;
+  const MAX_LIMIT = 100;
+
   const posts = await Post.findAll({
-    limit: req.query["limit"] != null ? Number(req.query["limit"]) : undefined,
-    offset: req.query["offset"] != null ? Number(req.query["offset"]) : undefined,
+    limit: Math.min(
+      req.query["limit"] != null ? Number(req.query["limit"]) : DEFAULT_LIMIT,
+      MAX_LIMIT,
+    ),
+    offset: req.query["offset"] != null ? Number(req.query["offset"]) : 0,
     where: {
       userId: user.id,
     },
+    order: [["createdAt", "DESC"]],
   });
 
   return res.status(200).type("application/json").send(posts);

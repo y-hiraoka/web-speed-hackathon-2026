@@ -1,19 +1,40 @@
-import { ReactNode, useId } from "react";
-import { WrappedFieldProps } from "redux-form";
+import { ReactNode, Ref, useId } from "react";
 
 import { FontAwesomeIcon } from "@web-speed-hackathon-2026/client/src/components/foundation/FontAwesomeIcon";
 import { Input } from "@web-speed-hackathon-2026/client/src/components/foundation/Input";
 
-interface Props extends WrappedFieldProps {
+interface Props {
   label: string;
   leftItem?: ReactNode;
   rightItem?: ReactNode;
+  name: string;
+  value?: string;
+  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onBlur: (e: React.FocusEvent<HTMLInputElement>) => void;
+  touched: boolean;
+  error?: string;
+  type?: string;
+  autoComplete?: string;
+  placeholder?: string;
+  ref?: Ref<HTMLInputElement>;
 }
 
-export const FormInputField = ({ label, leftItem, rightItem, input, meta, ...props }: Props) => {
+export const FormInputField = ({
+  label,
+  leftItem,
+  rightItem,
+  name,
+  value,
+  onChange,
+  onBlur,
+  touched,
+  error,
+  ref,
+  ...props
+}: Props) => {
   const inputId = useId();
   const errorMessageId = useId();
-  const isInvalid = meta.touched && meta.error;
+  const isInvalid = touched && error;
 
   return (
     <div className="flex flex-col gap-y-1">
@@ -24,9 +45,13 @@ export const FormInputField = ({ label, leftItem, rightItem, input, meta, ...pro
         id={inputId}
         leftItem={leftItem}
         rightItem={rightItem}
-        aria-invalid={isInvalid || undefined}
+        aria-invalid={isInvalid ? true : undefined}
         aria-describedby={isInvalid ? errorMessageId : undefined}
-        {...input}
+        name={name}
+        value={value}
+        onChange={onChange}
+        onBlur={onBlur}
+        ref={ref}
         {...props}
       />
       {isInvalid && (
@@ -34,7 +59,7 @@ export const FormInputField = ({ label, leftItem, rightItem, input, meta, ...pro
           <span className="mr-1">
             <FontAwesomeIcon iconType="exclamation-circle" styleType="solid" />
           </span>
-          {meta.error}
+          {error}
         </span>
       )}
     </div>

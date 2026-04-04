@@ -1,11 +1,8 @@
-import classNames from "classnames";
-import moment from "moment";
 import {
-  ChangeEvent,
+  memo,
   useCallback,
   useId,
   useRef,
-  useState,
   KeyboardEvent,
   FormEvent,
   useEffect,
@@ -14,6 +11,33 @@ import {
 import { FontAwesomeIcon } from "@web-speed-hackathon-2026/client/src/components/foundation/FontAwesomeIcon";
 import { DirectMessageFormData } from "@web-speed-hackathon-2026/client/src/direct_message/types";
 import { getProfileImagePath } from "@web-speed-hackathon-2026/client/src/utils/get_path";
+
+const timeFormatter = new Intl.DateTimeFormat("ja", {
+  hour: "2-digit",
+  minute: "2-digit",
+  hour12: false,
+});
+
+const MessageItem = memo(({ message, isActiveUserSend }: { message: Models.DirectMessage; isActiveUserSend: boolean }) => (
+  <li
+    className={`flex w-full flex-col ${isActiveUserSend ? "items-end" : "items-start"}`}
+  >
+    <p
+      className={`max-w-3/4 rounded-xl border px-4 py-2 text-sm leading-relaxed wrap-anywhere whitespace-pre-wrap ${isActiveUserSend ? "bg-cax-brand text-cax-surface-raised rounded-br-sm border-transparent" : "border-cax-border bg-cax-surface text-cax-text rounded-bl-sm"}`}
+    >
+      {message.body}
+    </p>
+    <div className="flex gap-1 text-xs">
+      <time dateTime={message.createdAt}>
+        {timeFormatter.format(new Date(message.createdAt))}
+      </time>
+      {isActiveUserSend && message.isRead && (
+        <span className="text-cax-text-muted">既読</span>
+      )}
+    </div>
+  </li>
+));
+MessageItem.displayName = "MessageItem";
 
 interface Props {
   conversationError: Error | null;
@@ -35,23 +59,15 @@ export const DirectMessagePage = ({
   onSubmit,
 }: Props) => {
   const formRef = useRef<HTMLFormElement>(null);
+  const textAreaRef = useRef<HTMLTextAreaElement>(null);
   const textAreaId = useId();
 
   const peer =
     conversation.initiator.id !== activeUser.id ? conversation.initiator : conversation.member;
 
-  const [text, setText] = useState("");
-  const textAreaRows = Math.min((text || "").split("\n").length, 5);
-  const isInvalid = text.trim().length === 0;
-  const scrollHeightRef = useRef(0);
-
-  const handleChange = useCallback(
-    (event: ChangeEvent<HTMLTextAreaElement>) => {
-      setText(event.target.value);
-      onTyping();
-    },
-    [onTyping],
-  );
+  const handleInput = useCallback(() => {
+    onTyping();
+  }, [onTyping]);
 
   const handleKeyDown = useCallback(
     (event: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -66,24 +82,24 @@ export const DirectMessagePage = ({
   const handleSubmit = useCallback(
     (event: FormEvent<HTMLFormElement>) => {
       event.preventDefault();
-      void onSubmit({ body: text.trim() }).then(() => {
-        setText("");
-      });
+      const textarea = textAreaRef.current;
+      if (!textarea) return;
+      const body = textarea.value.trim();
+      if (body.length === 0) return;
+      textarea.value = "";
+      void onSubmit({ body });
     },
-    [onSubmit, text],
+    [onSubmit],
   );
 
+  // Scroll to bottom once after messages render, without continuous ResizeObserver
   useEffect(() => {
-    const id = setInterval(() => {
-      const height = Number(window.getComputedStyle(document.body).height.replace("px", ""));
-      if (height !== scrollHeightRef.current) {
-        scrollHeightRef.current = height;
-        window.scrollTo(0, height);
-      }
-    }, 1);
-
-    return () => clearInterval(id);
-  }, []);
+    // Use requestAnimationFrame to wait for layout to settle
+    const rafId = requestAnimationFrame(() => {
+      window.scrollTo(0, document.body.scrollHeight);
+    });
+    return () => cancelAnimationFrame(rafId);
+  }, [conversation.messages.length]);
 
   if (conversationError != null) {
     return (
@@ -99,7 +115,11 @@ export const DirectMessagePage = ({
         <img
           alt={peer.profileImage.alt}
           className="h-12 w-12 rounded-full object-cover"
+          decoding="async"
+          height={48}
+          loading="lazy"
           src={getProfileImagePath(peer.profileImage.id)}
+          width={48}
         />
         <div className="min-w-0">
           <h1 className="overflow-hidden text-xl font-bold text-ellipsis whitespace-nowrap">
@@ -119,37 +139,13 @@ export const DirectMessagePage = ({
         )}
 
         <ul className="grid gap-3" data-testid="dm-message-list">
-          {conversation.messages.map((message) => {
-            const isActiveUserSend = message.sender.id === activeUser.id;
-
-            return (
-              <li
-                className={classNames(
-                  "flex flex-col w-full",
-                  isActiveUserSend ? "items-end" : "items-start",
-                )}
-              >
-                <p
-                  className={classNames(
-                    "max-w-3/4 rounded-xl border px-4 py-2 text-sm whitespace-pre-wrap leading-relaxed wrap-anywhere",
-                    isActiveUserSend
-                      ? "rounded-br-sm border-transparent bg-cax-brand text-cax-surface-raised"
-                      : "rounded-bl-sm border-cax-border bg-cax-surface text-cax-text",
-                  )}
-                >
-                  {message.body}
-                </p>
-                <div className="flex gap-1 text-xs">
-                  <time dateTime={message.createdAt}>
-                    {moment(message.createdAt).locale("ja").format("HH:mm")}
-                  </time>
-                  {isActiveUserSend && message.isRead && (
-                    <span className="text-cax-text-muted">既読</span>
-                  )}
-                </div>
-              </li>
-            );
-          })}
+          {conversation.messages.map((message) => (
+            <MessageItem
+              key={message.id}
+              message={message}
+              isActiveUserSend={message.sender.id === activeUser.id}
+            />
+          ))}
         </ul>
       </div>
 
@@ -171,17 +167,17 @@ export const DirectMessagePage = ({
             </label>
             <textarea
               id={textAreaId}
-              className="border-cax-border placeholder-cax-text-subtle focus:outline-cax-brand w-full resize-none rounded-xl border px-3 py-2 focus:outline-2 focus:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-              value={text}
-              onChange={handleChange}
+              ref={textAreaRef}
+              className="border-cax-border placeholder-cax-text-subtle focus:outline-cax-brand w-full resize-none rounded-xl border px-3 py-2 focus:outline-2 focus:outline-offset-2"
+              defaultValue=""
+              onInput={handleInput}
               onKeyDown={handleKeyDown}
-              rows={textAreaRows}
-              disabled={isSubmitting}
+              rows={1}
             />
           </div>
           <button
             className="bg-cax-brand text-cax-surface-raised hover:bg-cax-brand-strong rounded-full px-4 py-2 disabled:cursor-not-allowed disabled:opacity-50"
-            disabled={isInvalid || isSubmitting}
+            disabled={isSubmitting}
             type="submit"
           >
             <FontAwesomeIcon iconType="arrow-right" styleType="solid" />

@@ -14,21 +14,29 @@ export function useHasContentBelow(
   const [hasContentBelow, setHasContentBelow] = useState(false);
 
   useEffect(() => {
-    let active = true;
-    const check = () => {
-      if (!active) return;
-      const endEl = contentEndRef.current;
-      const barEl = boundaryRef.current;
-      if (endEl && barEl) {
-        const endRect = endEl.getBoundingClientRect();
-        const barRect = barEl.getBoundingClientRect();
-        setHasContentBelow(endRect.top > barRect.top);
-      }
-      scheduler.postTask(check, { priority: "user-blocking", delay: 1 });
-    };
-    scheduler.postTask(check, { priority: "user-blocking", delay: 1 });
+    const endEl = contentEndRef.current;
+    const barEl = boundaryRef.current;
+    if (!endEl || !barEl) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          // When the end element is not intersecting and is below the viewport,
+          // it means there is content below the boundary.
+          // We check boundingClientRect.top > 0 to confirm it's below (not above).
+          setHasContentBelow(!entry.isIntersecting && entry.boundingClientRect.top > 0);
+        }
+      },
+      {
+        root: null,
+        threshold: 0,
+      },
+    );
+
+    observer.observe(endEl);
+
     return () => {
-      active = false;
+      observer.disconnect();
     };
   }, [contentEndRef, boundaryRef]);
 

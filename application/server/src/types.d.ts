@@ -1,9 +1,10 @@
 import WebSocket from "ws";
 
-declare module "express-session" {
-  interface SessionData {
-    userId?: string | undefined;
-  }
+interface AppSession {
+  userId?: string | undefined;
+  isChanged?: boolean | undefined;
+  isNew?: boolean | undefined;
+  isPopulated?: boolean | undefined;
 }
 
 declare module "express" {
@@ -16,6 +17,8 @@ declare module "express" {
 declare global {
   namespace Express {
     interface Request {
+      session: AppSession;
+      sessionOptions: CookieSessionInterfaces.CookieSessionOptions;
       _wsHandled: boolean;
       ws: WebSocket;
     }

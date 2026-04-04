@@ -8,7 +8,15 @@ export const authRouter = Router();
 
 authRouter.post("/signup", async (req, res) => {
   try {
-    const { id: userId } = await User.create(req.body);
+    const created = await User.create(req.body);
+    const userId = created.id;
+
+    // Keep FTS5 index in sync with new users
+    await User.sequelize!.query(
+      "INSERT INTO users_fts(id, username, name) VALUES (:id, :username, :name)",
+      { replacements: { id: userId, username: req.body.username, name: req.body.name } },
+    );
+
     const user = await User.findByPk(userId);
 
     req.session.userId = userId;

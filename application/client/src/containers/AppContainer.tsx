@@ -1,20 +1,60 @@
-import { useCallback, useEffect, useId, useState } from "react";
-import { Helmet, HelmetProvider } from "react-helmet";
+import { lazy, Suspense, useCallback, useEffect, useId, useState, useTransition } from "react";
 import { Route, Routes, useLocation, useNavigate } from "react-router";
 
 import { AppPage } from "@web-speed-hackathon-2026/client/src/components/application/AppPage";
-import { AuthModalContainer } from "@web-speed-hackathon-2026/client/src/containers/AuthModalContainer";
-import { CrokContainer } from "@web-speed-hackathon-2026/client/src/containers/CrokContainer";
-import { DirectMessageContainer } from "@web-speed-hackathon-2026/client/src/containers/DirectMessageContainer";
-import { DirectMessageListContainer } from "@web-speed-hackathon-2026/client/src/containers/DirectMessageListContainer";
-import { NewPostModalContainer } from "@web-speed-hackathon-2026/client/src/containers/NewPostModalContainer";
 import { NotFoundContainer } from "@web-speed-hackathon-2026/client/src/containers/NotFoundContainer";
-import { PostContainer } from "@web-speed-hackathon-2026/client/src/containers/PostContainer";
-import { SearchContainer } from "@web-speed-hackathon-2026/client/src/containers/SearchContainer";
-import { TermContainer } from "@web-speed-hackathon-2026/client/src/containers/TermContainer";
-import { TimelineContainer } from "@web-speed-hackathon-2026/client/src/containers/TimelineContainer";
-import { UserProfileContainer } from "@web-speed-hackathon-2026/client/src/containers/UserProfileContainer";
 import { fetchJSON, sendJSON } from "@web-speed-hackathon-2026/client/src/utils/fetchers";
+
+const TimelineContainer = lazy(() =>
+  import("@web-speed-hackathon-2026/client/src/containers/TimelineContainer").then((m) => ({
+    default: m.TimelineContainer,
+  })),
+);
+const CrokContainer = lazy(() =>
+  import("@web-speed-hackathon-2026/client/src/containers/CrokContainer").then((m) => ({
+    default: m.CrokContainer,
+  })),
+);
+const DirectMessageContainer = lazy(() =>
+  import("@web-speed-hackathon-2026/client/src/containers/DirectMessageContainer").then((m) => ({
+    default: m.DirectMessageContainer,
+  })),
+);
+const DirectMessageListContainer = lazy(() =>
+  import("@web-speed-hackathon-2026/client/src/containers/DirectMessageListContainer").then(
+    (m) => ({ default: m.DirectMessageListContainer }),
+  ),
+);
+const PostContainer = lazy(() =>
+  import("@web-speed-hackathon-2026/client/src/containers/PostContainer").then((m) => ({
+    default: m.PostContainer,
+  })),
+);
+const SearchContainer = lazy(() =>
+  import("@web-speed-hackathon-2026/client/src/containers/SearchContainer").then((m) => ({
+    default: m.SearchContainer,
+  })),
+);
+const TermContainer = lazy(() =>
+  import("@web-speed-hackathon-2026/client/src/containers/TermContainer").then((m) => ({
+    default: m.TermContainer,
+  })),
+);
+const UserProfileContainer = lazy(() =>
+  import("@web-speed-hackathon-2026/client/src/containers/UserProfileContainer").then((m) => ({
+    default: m.UserProfileContainer,
+  })),
+);
+const AuthModalContainer = lazy(() =>
+  import("@web-speed-hackathon-2026/client/src/containers/AuthModalContainer").then((m) => ({
+    default: m.AuthModalContainer,
+  })),
+);
+const NewPostModalContainer = lazy(() =>
+  import("@web-speed-hackathon-2026/client/src/containers/NewPostModalContainer").then((m) => ({
+    default: m.NewPostModalContainer,
+  })),
+);
 
 export const AppContainer = () => {
   const { pathname } = useLocation();
@@ -23,70 +63,95 @@ export const AppContainer = () => {
     window.scrollTo(0, 0);
   }, [pathname]);
 
-  const [activeUser, setActiveUser] = useState<Models.User | null>(null);
-  const [isLoadingActiveUser, setIsLoadingActiveUser] = useState(true);
+  const initialData = window.__INITIAL_DATA__;
+  const hasInitialMe = initialData != null && "me" in initialData;
+
+  const [activeUser, setActiveUser] = useState<Models.User | null>(
+    hasInitialMe ? initialData.me : null,
+  );
+  const [, startTransition] = useTransition();
   useEffect(() => {
-    void fetchJSON<Models.User>("/api/v1/me")
-      .then((user) => {
+    if (hasInitialMe) {
+      return;
+    }
+    const prefetched = window.__PREFETCH__?.["/api/v1/me"];
+    const mePromise = prefetched
+      ? (prefetched as Promise<Models.User>).then((user) => {
+          delete window.__PREFETCH__!["/api/v1/me"];
+          return user;
+        })
+      : fetchJSON<Models.User>("/api/v1/me");
+    void mePromise.then((user) => {
+      startTransition(() => {
         setActiveUser(user);
-      })
-      .finally(() => {
-        setIsLoadingActiveUser(false);
       });
-  }, [setActiveUser, setIsLoadingActiveUser]);
+    });
+  }, [setActiveUser, hasInitialMe]);
   const handleLogout = useCallback(async () => {
     await sendJSON("/api/v1/signout", {});
     setActiveUser(null);
     navigate("/");
   }, [navigate]);
+  const handleUpdateActiveUser = useCallback((user: Models.User) => {
+    setActiveUser(user);
+  }, []);
 
   const authModalId = useId();
   const newPostModalId = useId();
 
-  if (isLoadingActiveUser) {
-    return (
-      <HelmetProvider>
-        <Helmet>
-          <title>読込中 - CaX</title>
-        </Helmet>
-      </HelmetProvider>
-    );
-  }
-
   return (
-    <HelmetProvider>
+    <>
       <AppPage
         activeUser={activeUser}
         authModalId={authModalId}
         newPostModalId={newPostModalId}
         onLogout={handleLogout}
       >
-        <Routes>
-          <Route element={<TimelineContainer />} path="/" />
-          <Route
-            element={
-              <DirectMessageListContainer activeUser={activeUser} authModalId={authModalId} />
-            }
-            path="/dm"
-          />
-          <Route
-            element={<DirectMessageContainer activeUser={activeUser} authModalId={authModalId} />}
-            path="/dm/:conversationId"
-          />
-          <Route element={<SearchContainer />} path="/search" />
-          <Route element={<UserProfileContainer />} path="/users/:username" />
-          <Route element={<PostContainer />} path="/posts/:postId" />
-          <Route element={<TermContainer />} path="/terms" />
-          <Route
-            element={<CrokContainer activeUser={activeUser} authModalId={authModalId} />}
-            path="/crok"
-          />
-          <Route element={<NotFoundContainer />} path="*" />
-        </Routes>
+        <Suspense fallback={null}>
+          <Routes>
+            <Route element={<TimelineContainer />} path="/" />
+            <Route
+              element={
+                <DirectMessageListContainer activeUser={activeUser} authModalId={authModalId} />
+              }
+              path="/dm"
+            />
+            <Route
+              element={<DirectMessageContainer activeUser={activeUser} authModalId={authModalId} />}
+              path="/dm/:conversationId"
+            />
+            <Route element={<SearchContainer />} path="/search" />
+            <Route element={<UserProfileContainer />} path="/users/:username" />
+            <Route element={<PostContainer />} path="/posts/:postId" />
+            <Route element={<TermContainer />} path="/terms" />
+            <Route
+              element={<CrokContainer activeUser={activeUser} authModalId={authModalId} />}
+              path="/crok"
+            />
+            <Route element={<NotFoundContainer />} path="*" />
+          </Routes>
+        </Suspense>
       </AppPage>
 
-      <AuthModalContainer id={authModalId} onUpdateActiveUser={setActiveUser} />
-      <NewPostModalContainer id={newPostModalId} />
-    </HelmetProvider>
+      <dialog
+        className="backdrop:bg-cax-overlay/50 bg-cax-surface fixed inset-0 m-auto w-full max-w-[calc(min(var(--container-md),100%)-var(--spacing)*4)] rounded-lg p-4"
+        id={authModalId}
+        onClick={(e) => { if (e.target === e.currentTarget) e.currentTarget.close(); }}
+      >
+        <Suspense fallback={null}>
+          <AuthModalContainer dialogId={authModalId} onUpdateActiveUser={handleUpdateActiveUser} />
+        </Suspense>
+      </dialog>
+      <dialog
+        aria-label="新規投稿"
+        className="backdrop:bg-cax-overlay/50 bg-cax-surface fixed inset-0 m-auto w-full max-w-[calc(min(var(--container-md),100%)-var(--spacing)*4)] rounded-lg p-4"
+        id={newPostModalId}
+        onClick={(e) => { if (e.target === e.currentTarget) e.currentTarget.close(); }}
+      >
+        <Suspense fallback={null}>
+          <NewPostModalContainer dialogId={newPostModalId} />
+        </Suspense>
+      </dialog>
+    </>
   );
 };

@@ -1,8 +1,6 @@
 // @ts-nocheck
-import { createReadStream } from "node:fs";
 import { promises as fs } from "node:fs";
 import path from "node:path";
-import { createInterface } from "node:readline";
 import { fileURLToPath } from "node:url";
 
 import {
@@ -44,25 +42,13 @@ async function readJsonlFileBatched<T>(
 ): Promise<void> {
   const filePath = path.join(seedsDir, filename);
 
-  try {
-    await fs.access(filePath);
-  } catch {
-    throw new Error(`Seed file not found: ${filename}`);
-  }
-
-  const fileStream = createReadStream(filePath, { encoding: "utf8" });
-  const rl = createInterface({
-    input: fileStream,
-    crlfDelay: Infinity,
-  });
+  const content = await fs.readFile(filePath, "utf8");
+  const lines = content.split("\n");
 
   let batch: T[] = [];
-  let lineNumber = 0;
 
-  for await (const line of rl) {
-    lineNumber++;
-    const trimmedLine = line.trim();
-
+  for (let i = 0; i < lines.length; i++) {
+    const trimmedLine = lines[i]!.trim();
     if (!trimmedLine) continue;
 
     try {
@@ -73,8 +59,8 @@ async function readJsonlFileBatched<T>(
         batch = [];
       }
     } catch {
-      console.error(`Error parsing JSON in ${filename} at line ${lineNumber}`);
-      throw new Error(`Invalid JSONL format in ${filename} at line ${lineNumber}`);
+      console.error(`Error parsing JSON in ${filename} at line ${i + 1}`);
+      throw new Error(`Invalid JSONL format in ${filename} at line ${i + 1}`);
     }
   }
 
