@@ -1,8 +1,8 @@
-import { useEffect, useState, startTransition } from "react";
+import { useEffect, useState } from "react";
 
 import { TimelineItem } from "@web-speed-hackathon-2026/client/src/components/timeline/TimelineItem";
 
-const ABOVE_FOLD_COUNT = 3;
+const ABOVE_FOLD_COUNT = 2;
 
 interface Props {
   timeline: Models.Post[];
@@ -15,9 +15,10 @@ export const Timeline = ({ timeline }: Props) => {
   const [showBelowFold, setShowBelowFold] = useState(false);
 
   useEffect(() => {
-    startTransition(() => {
+    const id = requestIdleCallback(() => {
       setShowBelowFold(true);
-    });
+    }, { timeout: 300 });
+    return () => cancelIdleCallback(id);
   }, []);
 
   return (

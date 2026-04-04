@@ -254,7 +254,7 @@ ssrRouter.get("/{*splat}", async (req, res, next) => {
           { association: "movie", attributes: ["id"] },
           { association: "sound", attributes: ["id", "title", "artist"] },
         ],
-        limit: 10,
+        limit: 5,
         offset: 0,
         order: [["createdAt", "DESC"]],
       });
@@ -306,7 +306,7 @@ ssrRouter.get("/{*splat}", async (req, res, next) => {
     // Build prefetch URLs for this route
     const prefetchUrls: string[] = ["/api/v1/me"];
     if (url === "/") {
-      prefetchUrls.push("/api/v1/posts?limit=10&offset=0");
+      prefetchUrls.push("/api/v1/posts?limit=5&offset=0");
     } else if (postMatch) {
       const postId = postMatch[1];
       prefetchUrls.push(`/api/v1/posts/${postId}`);
