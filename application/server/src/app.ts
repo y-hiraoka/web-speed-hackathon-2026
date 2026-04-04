@@ -8,6 +8,7 @@ import { sessionMiddleware } from "@web-speed-hackathon-2026/server/src/session"
 export const app = Express();
 
 app.set("trust proxy", true);
+app.set("etag", false);
 
 app.use(sessionMiddleware);
 app.use(bodyParser.json());
