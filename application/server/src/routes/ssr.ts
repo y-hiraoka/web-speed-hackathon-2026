@@ -111,7 +111,26 @@ function generateTimelineHtml(posts: any[]): string {
       }).format(createdAt);
       const isoDate = createdAt.toISOString();
 
-      return `<article class="hover:bg-cax-surface-subtle px-1 sm:px-4"><div class="border-cax-border flex border-b px-2 pt-2 pb-4 sm:px-4"><div class="shrink-0 grow-0 pr-2 sm:pr-4"><a class="border-cax-border bg-cax-surface-subtle block h-12 w-12 overflow-hidden rounded-full border hover:opacity-75 sm:h-16 sm:w-16" href="/users/${username}"><img alt="${profileImageAlt}" decoding="async" height="64" loading="lazy" src="/images/profiles/${profileImageId}.webp" width="64"></a></div><div class="min-w-0 shrink grow"><p class="overflow-hidden text-sm text-ellipsis whitespace-nowrap"><a class="text-cax-text pr-1 font-bold hover:underline" href="/users/${username}">${name}</a><a class="text-cax-text-muted pr-1 hover:underline" href="/users/${username}">@${username}</a><span class="text-cax-text-muted pr-1">-</span><a class="text-cax-text-muted pr-1 hover:underline" href="/posts/${post.id}"><time datetime="${isoDate}">${dateStr}</time></a></p><div class="text-cax-text leading-relaxed">${text}</div></div></div></article>`;
+      // Build media placeholder HTML
+      let mediaHtml = "";
+      const images = post.images || [];
+      if (images.length > 0) {
+        const img = images[0];
+        const w = img.width || 1;
+        const h = img.height || 1;
+        mediaHtml = `<div class="relative mt-2 w-full"><div style="aspect-ratio:${w}/${h}" class="bg-cax-surface-subtle rounded overflow-hidden"></div></div>`;
+      } else if (post.movie) {
+        mediaHtml = `<div class="relative mt-2 w-full"><div style="aspect-ratio:1/1" class="bg-cax-surface-subtle rounded overflow-hidden"></div></div>`;
+      } else if (post.sound) {
+        const title = escapeHtml(post.sound.title || "");
+        const artist = escapeHtml(post.sound.artist || "");
+        mediaHtml = `<div class="relative mt-2 w-full"><div class="bg-cax-surface-subtle rounded p-2"><span>${title}</span> - <span>${artist}</span></div></div>`;
+      }
+
+      // "Show Translation" button placeholder
+      const translationBtn = `<p><button class="text-cax-accent hover:underline" type="button"><span>Show Translation</span></button></p>`;
+
+      return `<article class="hover:bg-cax-surface-subtle px-1 sm:px-4"><div class="border-cax-border flex border-b px-2 pt-2 pb-4 sm:px-4"><div class="shrink-0 grow-0 pr-2 sm:pr-4"><a class="border-cax-border bg-cax-surface-subtle block h-12 w-12 overflow-hidden rounded-full border hover:opacity-75 sm:h-16 sm:w-16" href="/users/${username}"><img alt="${profileImageAlt}" decoding="async" height="64" loading="lazy" src="/images/profiles/${profileImageId}.webp" width="64"></a></div><div class="min-w-0 shrink grow"><p class="overflow-hidden text-sm text-ellipsis whitespace-nowrap"><a class="text-cax-text pr-1 font-bold hover:underline" href="/users/${username}">${name}</a><a class="text-cax-text-muted pr-1 hover:underline" href="/users/${username}">@${username}</a><span class="text-cax-text-muted pr-1">-</span><a class="text-cax-text-muted pr-1 hover:underline" href="/posts/${post.id}"><time datetime="${isoDate}">${dateStr}</time></a></p><div class="text-cax-text leading-relaxed"><p><span>${text}</span></p>${translationBtn}</div>${mediaHtml}</div></div></article>`;
     })
     .join("");
 
@@ -134,7 +153,25 @@ function generatePostHtml(post: any): string {
   }).format(createdAt);
   const isoDate = createdAt.toISOString();
 
-  return `<article class="px-1 sm:px-4"><div class="border-cax-border border-b px-2 pt-2 pb-4 sm:px-4"><div class="flex items-center gap-2 mb-2"><a class="border-cax-border bg-cax-surface-subtle block h-12 w-12 overflow-hidden rounded-full border hover:opacity-75 sm:h-16 sm:w-16" href="/users/${username}"><img alt="${profileImageAlt}" decoding="async" height="64" loading="lazy" src="/images/profiles/${profileImageId}.webp" width="64"></a><div><a class="text-cax-text font-bold hover:underline" href="/users/${username}">${name}</a><br><a class="text-cax-text-muted hover:underline" href="/users/${username}">@${username}</a></div></div><div class="text-cax-text leading-relaxed text-lg mb-2">${text}</div><div class="text-cax-text-muted"><time datetime="${isoDate}">${dateStr}</time></div></div></article>`;
+  // Build media placeholder HTML
+  let mediaHtml = "";
+  const images = post.images || [];
+  if (images.length > 0) {
+    const img = images[0];
+    const w = img.width || 1;
+    const h = img.height || 1;
+    mediaHtml = `<div class="relative mt-2 w-full"><div style="aspect-ratio:${w}/${h}" class="bg-cax-surface-subtle rounded overflow-hidden"></div></div>`;
+  } else if (post.movie) {
+    mediaHtml = `<div class="relative mt-2 w-full"><div style="aspect-ratio:1/1" class="bg-cax-surface-subtle rounded overflow-hidden"></div></div>`;
+  } else if (post.sound) {
+    const title = escapeHtml(post.sound?.title || "");
+    const artist = escapeHtml(post.sound?.artist || "");
+    mediaHtml = `<div class="relative mt-2 w-full"><div class="bg-cax-surface-subtle rounded p-2"><span>${title}</span> - <span>${artist}</span></div></div>`;
+  }
+
+  const translationBtn = `<p><button class="text-cax-accent hover:underline" type="button"><span>Show Translation</span></button></p>`;
+
+  return `<article class="px-1 sm:px-4"><div class="border-cax-border border-b px-4 pt-4 pb-4"><div class="flex items-center justify-center"><div class="shrink-0 grow-0 pr-2"><a class="border-cax-border bg-cax-surface-subtle block h-14 w-14 overflow-hidden rounded-full border hover:opacity-95 sm:h-16 sm:w-16" href="/users/${username}"><img alt="${profileImageAlt}" decoding="async" height="64" loading="lazy" src="/images/profiles/${profileImageId}.webp" width="64"></a></div><div class="min-w-0 shrink grow overflow-hidden text-ellipsis whitespace-nowrap"><p><a class="text-cax-text font-bold hover:underline" href="/users/${username}">${name}</a></p><p><a class="text-cax-text-muted hover:underline" href="/users/${username}">@${username}</a></p></div></div><div class="pt-2 sm:pt-4"><div class="text-cax-text text-xl leading-relaxed"><p><span>${text}</span></p>${translationBtn}</div>${mediaHtml}<p class="mt-2 text-sm sm:mt-4"><a class="text-cax-text-muted hover:underline" href="/posts/${post.id}"><time datetime="${isoDate}">${dateStr}</time></a></p></div></div></article>`;
 }
 
 // Generate terms page HTML (static content)
@@ -177,7 +214,7 @@ ssrRouter.get("/{*splat}", async (req, res, next) => {
       }
     }
 
-    // For the homepage, prefetch posts with minimal attributes for SSR
+    // For the homepage, prefetch posts with attributes needed for SSR shell
     if (url === "/") {
       const posts = await Post.findAll({
         attributes: ["id", "text", "createdAt"],
@@ -187,6 +224,9 @@ ssrRouter.get("/{*splat}", async (req, res, next) => {
             attributes: ["id", "username", "name"],
             include: [{ association: "profileImage", attributes: ["id", "alt"] }],
           },
+          { association: "images", attributes: ["id", "alt", "width", "height"] },
+          { association: "movie", attributes: ["id"] },
+          { association: "sound", attributes: ["id", "title", "artist"] },
         ],
         limit: 10,
         offset: 0,
@@ -206,7 +246,7 @@ ssrRouter.get("/{*splat}", async (req, res, next) => {
       // Terms page: render static terms content
       pageContent = generateTermsHtml();
     } else if (postMatch) {
-      // Post detail page: fetch and render the post with minimal attributes
+      // Post detail page: fetch and render the post with media for layout stability
       const postId = postMatch[1];
       const post = await Post.findByPk(postId, {
         attributes: ["id", "text", "createdAt"],
@@ -216,6 +256,9 @@ ssrRouter.get("/{*splat}", async (req, res, next) => {
             attributes: ["id", "username", "name"],
             include: [{ association: "profileImage", attributes: ["id", "alt"] }],
           },
+          { association: "images", attributes: ["id", "alt", "width", "height"] },
+          { association: "movie", attributes: ["id"] },
+          { association: "sound", attributes: ["id", "title", "artist"] },
         ],
       });
       if (post != null) {
