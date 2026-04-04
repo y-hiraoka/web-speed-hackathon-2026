@@ -89,9 +89,7 @@ export const AppContainer = () => {
   }, [setActiveUser, hasInitialMe]);
   const handleLogout = useCallback(async () => {
     await sendJSON("/api/v1/signout", {});
-    startTransition(() => {
-      setActiveUser(null);
-    });
+    setActiveUser(null);
     navigate("/");
   }, [navigate]);
   const handleUpdateActiveUser = useCallback((user: Models.User) => {
