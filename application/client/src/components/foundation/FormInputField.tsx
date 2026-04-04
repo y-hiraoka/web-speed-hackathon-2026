@@ -1,4 +1,4 @@
-import { ReactNode, useId } from "react";
+import { ReactNode, Ref, useId } from "react";
 
 import { FontAwesomeIcon } from "@web-speed-hackathon-2026/client/src/components/foundation/FontAwesomeIcon";
 import { Input } from "@web-speed-hackathon-2026/client/src/components/foundation/Input";
@@ -8,14 +8,15 @@ interface Props {
   leftItem?: ReactNode;
   rightItem?: ReactNode;
   name: string;
-  value: string;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  value?: string;
+  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onBlur: (e: React.FocusEvent<HTMLInputElement>) => void;
   touched: boolean;
   error?: string;
   type?: string;
   autoComplete?: string;
   placeholder?: string;
+  ref?: Ref<HTMLInputElement>;
 }
 
 export const FormInputField = ({
@@ -28,6 +29,7 @@ export const FormInputField = ({
   onBlur,
   touched,
   error,
+  ref,
   ...props
 }: Props) => {
   const inputId = useId();
@@ -49,6 +51,7 @@ export const FormInputField = ({
         value={value}
         onChange={onChange}
         onBlur={onBlur}
+        ref={ref}
         {...props}
       />
       {isInvalid && (

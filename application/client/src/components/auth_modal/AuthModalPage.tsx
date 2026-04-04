@@ -1,4 +1,4 @@
-import { FormEvent, useCallback, useState } from "react";
+import { FormEvent, useCallback, useRef, useState } from "react";
 
 import { AuthFormData } from "@web-speed-hackathon-2026/client/src/auth/types";
 import { validate } from "@web-speed-hackathon-2026/client/src/auth/validation";
@@ -14,26 +14,42 @@ interface Props {
 
 export const AuthModalPage = ({ onRequestCloseModal, onSubmit }: Props) => {
   const [type, setType] = useState<"signin" | "signup">("signin");
-  const [username, setUsername] = useState("");
-  const [name, setName] = useState("");
-  const [password, setPassword] = useState("");
-  const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [validationErrors, setValidationErrors] = useState<Partial<Record<string, string>>>({});
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
 
-  const values: AuthFormData = { type, username, name, password };
-  const errors = validate(values);
-  const invalid = Object.keys(errors).length > 0;
+  const usernameRef = useRef<HTMLInputElement>(null);
+  const nameRef = useRef<HTMLInputElement>(null);
+  const passwordRef = useRef<HTMLInputElement>(null);
 
-  const handleBlur = useCallback((field: string) => {
-    setTouched((prev) => ({ ...prev, [field]: true }));
-  }, []);
+  const getValues = useCallback((): AuthFormData => {
+    return {
+      type,
+      username: usernameRef.current?.value ?? "",
+      name: nameRef.current?.value ?? "",
+      password: passwordRef.current?.value ?? "",
+    };
+  }, [type]);
+
+  const handleBlur = useCallback(
+    (field: string) => {
+      setTouched((prev) => ({ ...prev, [field]: true }));
+      const values = getValues();
+      const errors = validate(values);
+      setValidationErrors(errors);
+    },
+    [getValues],
+  );
 
   const handleSubmit = useCallback(
     async (e: FormEvent) => {
       e.preventDefault();
+      const values = getValues();
+      const errors = validate(values);
       setTouched({ username: true, name: true, password: true });
-      if (invalid) return;
+      setValidationErrors(errors);
+      if (Object.keys(errors).length > 0) return;
       setSubmitting(true);
       setError(null);
       try {
@@ -45,7 +61,7 @@ export const AuthModalPage = ({ onRequestCloseModal, onSubmit }: Props) => {
         setSubmitting(false);
       }
     },
-    [invalid, onSubmit, values],
+    [getValues, onSubmit],
   );
 
   return (
@@ -70,11 +86,10 @@ export const AuthModalPage = ({ onRequestCloseModal, onSubmit }: Props) => {
           label="ユーザー名"
           leftItem={<span className="text-cax-text-subtle leading-none">@</span>}
           autoComplete="username"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
+          ref={usernameRef}
           onBlur={() => handleBlur("username")}
           touched={!!touched["username"]}
-          error={errors["username"]}
+          error={validationErrors["username"]}
         />
 
         {type === "signup" && (
@@ -82,11 +97,10 @@ export const AuthModalPage = ({ onRequestCloseModal, onSubmit }: Props) => {
             name="name"
             label="名前"
             autoComplete="nickname"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
+            ref={nameRef}
             onBlur={() => handleBlur("name")}
             touched={!!touched["name"]}
-            error={errors["name"]}
+            error={validationErrors["name"]}
           />
         )}
 
@@ -95,11 +109,10 @@ export const AuthModalPage = ({ onRequestCloseModal, onSubmit }: Props) => {
           label="パスワード"
           type="password"
           autoComplete={type === "signup" ? "new-password" : "current-password"}
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          ref={passwordRef}
           onBlur={() => handleBlur("password")}
           touched={!!touched["password"]}
-          error={errors["password"]}
+          error={validationErrors["password"]}
         />
       </div>
 
@@ -112,7 +125,7 @@ export const AuthModalPage = ({ onRequestCloseModal, onSubmit }: Props) => {
         </p>
       ) : null}
 
-      <ModalSubmitButton disabled={submitting || invalid} loading={submitting}>
+      <ModalSubmitButton disabled={submitting} loading={submitting}>
         {type === "signin" ? "サインイン" : "登録する"}
       </ModalSubmitButton>
 
