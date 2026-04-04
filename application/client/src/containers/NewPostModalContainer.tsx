@@ -63,7 +63,7 @@ export const NewPostModalContainer = ({ dialogId }: Props) => {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [dialogId]);
 
   return (
     <NewPostModalPage

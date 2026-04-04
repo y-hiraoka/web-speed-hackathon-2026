@@ -249,8 +249,9 @@ ssrRouter.get("/{*splat}", async (req, res, next) => {
     }
 
     // For the homepage, prefetch posts with attributes needed for SSR shell
+    // Use unscoped() to avoid merging with defaultScope includes
     if (url === "/") {
-      const posts = await Post.findAll({
+      const posts = await Post.unscoped().findAll({
         attributes: ["id", "text", "createdAt"],
         include: [
           {
@@ -258,7 +259,7 @@ ssrRouter.get("/{*splat}", async (req, res, next) => {
             attributes: ["id", "username", "name"],
             include: [{ association: "profileImage", attributes: ["id", "alt"] }],
           },
-          { association: "images", attributes: ["id", "alt", "width", "height"] },
+          { association: "images", attributes: ["id", "alt", "width", "height", "ext"], through: { attributes: [] } },
           { association: "movie", attributes: ["id"] },
           { association: "sound", attributes: ["id", "title", "artist"] },
         ],
@@ -282,7 +283,7 @@ ssrRouter.get("/{*splat}", async (req, res, next) => {
     } else if (postMatch) {
       // Post detail page: fetch and render the post with media for layout stability
       const postId = postMatch[1];
-      const post = await Post.findByPk(postId, {
+      const post = await Post.unscoped().findByPk(postId, {
         attributes: ["id", "text", "createdAt"],
         include: [
           {
@@ -290,7 +291,7 @@ ssrRouter.get("/{*splat}", async (req, res, next) => {
             attributes: ["id", "username", "name"],
             include: [{ association: "profileImage", attributes: ["id", "alt"] }],
           },
-          { association: "images", attributes: ["id", "alt", "width", "height"] },
+          { association: "images", attributes: ["id", "alt", "width", "height", "ext"], through: { attributes: [] } },
           { association: "movie", attributes: ["id"] },
           { association: "sound", attributes: ["id", "title", "artist"] },
         ],

@@ -168,12 +168,11 @@ export const DirectMessagePage = ({
             <textarea
               id={textAreaId}
               ref={textAreaRef}
-              className="border-cax-border placeholder-cax-text-subtle focus:outline-cax-brand w-full resize-none rounded-xl border px-3 py-2 focus:outline-2 focus:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              className="border-cax-border placeholder-cax-text-subtle focus:outline-cax-brand w-full resize-none rounded-xl border px-3 py-2 focus:outline-2 focus:outline-offset-2"
               defaultValue=""
               onInput={handleInput}
               onKeyDown={handleKeyDown}
               rows={1}
-              disabled={isSubmitting}
             />
           </div>
           <button

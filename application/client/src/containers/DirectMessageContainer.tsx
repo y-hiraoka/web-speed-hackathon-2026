@@ -77,8 +77,10 @@ export const DirectMessageContainer = ({ activeUser, authModalId }: Props) => {
           { body: params.body },
         );
         // Optimistically append the new message instead of refetching all
+        // Deduplicate: WebSocket handler may have already added this message
         setConversation((prev) => {
           if (prev == null) return prev;
+          if (prev.messages.some((m) => m.id === newMessage.id)) return prev;
           return {
             ...prev,
             messages: [...prev.messages, newMessage],
