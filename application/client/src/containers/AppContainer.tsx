@@ -45,16 +45,8 @@ const UserProfileContainer = lazy(() =>
     default: m.UserProfileContainer,
   })),
 );
-const AuthModalContainer = lazy(() =>
-  import("@web-speed-hackathon-2026/client/src/containers/AuthModalContainer").then((m) => ({
-    default: m.AuthModalContainer,
-  })),
-);
-const NewPostModalContainer = lazy(() =>
-  import("@web-speed-hackathon-2026/client/src/containers/NewPostModalContainer").then((m) => ({
-    default: m.NewPostModalContainer,
-  })),
-);
+import { AuthModalContainer } from "@web-speed-hackathon-2026/client/src/containers/AuthModalContainer";
+import { NewPostModalContainer } from "@web-speed-hackathon-2026/client/src/containers/NewPostModalContainer";
 
 export const AppContainer = () => {
   const { pathname } = useLocation();
@@ -142,9 +134,7 @@ export const AppContainer = () => {
         id={authModalId}
         onClick={(e) => { if (e.target === e.currentTarget) e.currentTarget.close(); }}
       >
-        <Suspense fallback={null}>
-          <AuthModalContainer dialogId={authModalId} onUpdateActiveUser={handleUpdateActiveUser} />
-        </Suspense>
+        <AuthModalContainer dialogId={authModalId} onUpdateActiveUser={handleUpdateActiveUser} />
       </dialog>
       <dialog
         aria-label="新規投稿"
@@ -152,9 +142,7 @@ export const AppContainer = () => {
         id={newPostModalId}
         onClick={(e) => { if (e.target === e.currentTarget) e.currentTarget.close(); }}
       >
-        <Suspense fallback={null}>
-          <NewPostModalContainer dialogId={newPostModalId} />
-        </Suspense>
+        <NewPostModalContainer dialogId={newPostModalId} />
       </dialog>
     </>
   );
