@@ -1,10 +1,8 @@
 import {
-  ChangeEvent,
   memo,
   useCallback,
   useId,
   useRef,
-  useState,
   KeyboardEvent,
   FormEvent,
   useEffect,
@@ -61,22 +59,15 @@ export const DirectMessagePage = ({
   onSubmit,
 }: Props) => {
   const formRef = useRef<HTMLFormElement>(null);
+  const textAreaRef = useRef<HTMLTextAreaElement>(null);
   const textAreaId = useId();
 
   const peer =
     conversation.initiator.id !== activeUser.id ? conversation.initiator : conversation.member;
 
-  const [text, setText] = useState("");
-  const textAreaRows = Math.min((text || "").split("\n").length, 5);
-  const isInvalid = text.trim().length === 0;
-
-  const handleChange = useCallback(
-    (event: ChangeEvent<HTMLTextAreaElement>) => {
-      setText(event.target.value);
-      onTyping();
-    },
-    [onTyping],
-  );
+  const handleInput = useCallback(() => {
+    onTyping();
+  }, [onTyping]);
 
   const handleKeyDown = useCallback(
     (event: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -91,11 +82,14 @@ export const DirectMessagePage = ({
   const handleSubmit = useCallback(
     (event: FormEvent<HTMLFormElement>) => {
       event.preventDefault();
-      void onSubmit({ body: text.trim() }).then(() => {
-        setText("");
-      });
+      const textarea = textAreaRef.current;
+      if (!textarea) return;
+      const body = textarea.value.trim();
+      if (body.length === 0) return;
+      textarea.value = "";
+      void onSubmit({ body });
     },
-    [onSubmit, text],
+    [onSubmit],
   );
 
   // Scroll to bottom once after messages render, without continuous ResizeObserver
@@ -173,17 +167,18 @@ export const DirectMessagePage = ({
             </label>
             <textarea
               id={textAreaId}
+              ref={textAreaRef}
               className="border-cax-border placeholder-cax-text-subtle focus:outline-cax-brand w-full resize-none rounded-xl border px-3 py-2 focus:outline-2 focus:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-              value={text}
-              onChange={handleChange}
+              defaultValue=""
+              onInput={handleInput}
               onKeyDown={handleKeyDown}
-              rows={textAreaRows}
+              rows={1}
               disabled={isSubmitting}
             />
           </div>
           <button
             className="bg-cax-brand text-cax-surface-raised hover:bg-cax-brand-strong rounded-full px-4 py-2 disabled:cursor-not-allowed disabled:opacity-50"
-            disabled={isInvalid || isSubmitting}
+            disabled={isSubmitting}
             type="submit"
           >
             <FontAwesomeIcon iconType="arrow-right" styleType="solid" />
