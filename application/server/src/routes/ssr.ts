@@ -65,35 +65,53 @@ function faIcon(iconType: string): string {
   return `<svg class="font-awesome inline-block fill-current leading-none"><use href="/sprites/font-awesome/solid.svg#${iconType}"></use></svg>`;
 }
 
-// Generate the navigation sidebar HTML (unauthenticated state)
-function generateNavHtml(): string {
+// Generate the navigation sidebar HTML based on auth state
+function generateNavHtml(user: any | null): string {
   const linkClass = "hover:bg-cax-brand-soft flex h-12 w-12 flex-col items-center justify-center rounded-full sm:h-auto sm:w-24 sm:rounded-sm sm:px-2 lg:h-auto lg:w-auto lg:flex-row lg:justify-start lg:rounded-full lg:px-4 lg:py-2";
+  const btnClass = linkClass;
   const iconClass = "relative text-xl lg:pr-2 lg:text-3xl";
   const textClass = "hidden sm:inline sm:text-sm lg:text-xl lg:font-bold";
 
-  const linkItems = [
-    { href: "/", icon: faIcon("home"), text: "ホーム" },
-    { href: "/search", icon: faIcon("search"), text: "検索" },
-  ];
+  const link = (href: string, icon: string, text: string) =>
+    `<li><a class="${linkClass}" href="${href}"><span class="${iconClass}">${icon}</span><span class="${textClass}">${text}</span></a></li>`;
+  const btn = (icon: string, text: string) =>
+    `<li><button class="${btnClass}" type="button"><span class="${iconClass}">${icon}</span><span class="${textClass}">${text}</span></button></li>`;
 
-  const listItems = linkItems
-    .map(
-      (item) =>
-        `<li><a class="${linkClass}" href="${item.href}"><span class="${iconClass}">${item.icon}</span><span class="${textClass}">${item.text}</span></a></li>`,
-    )
-    .join("");
+  let items = "";
+  items += link("/", faIcon("home"), "ホーム");
+  items += link("/search", faIcon("search"), "検索");
 
-  // "サインイン" button (shown for unauthenticated users, matching Navigation.tsx order)
-  const signInItem = `<li><button class="${linkClass}" type="button"><span class="${iconClass}">${faIcon("sign-in-alt")}</span><span class="${textClass}">サインイン</span></button></li>`;
+  if (user) {
+    items += link("/dm", faIcon("envelope"), "DM");
+    items += btn(faIcon("edit"), "投稿する");
+    items += link(`/users/${escapeHtml(user.username)}`, faIcon("user"), "マイページ");
+  } else {
+    items += btn(faIcon("sign-in-alt"), "サインイン");
+  }
 
-  const termsItem = `<li><a class="${linkClass}" href="/terms"><span class="${iconClass}">${faIcon("balance-scale")}</span><span class="${textClass}">利用規約</span></a></li>`;
+  if (user) {
+    // Crok logo as simple text placeholder (SVG is complex)
+    items += link("/crok", `<span class="inline-block h-[30px] w-[30px]"></span>`, "Crok");
+  }
 
-  return `<nav class="border-cax-border bg-cax-surface fixed right-0 bottom-0 left-0 z-10 h-12 border-t lg:relative lg:h-full lg:w-48 lg:border-t-0 lg:border-r"><div class="relative grid grid-flow-col items-center justify-evenly lg:fixed lg:flex lg:h-full lg:w-48 lg:flex-col lg:justify-between lg:p-2"><ul class="grid grid-flow-col items-center justify-evenly lg:grid-flow-row lg:auto-rows-min lg:justify-start lg:gap-2">${listItems}${signInItem}${termsItem}</ul></div></nav>`;
+  items += link("/terms", faIcon("balance-scale"), "利用規約");
+
+  // AccountMenu for authenticated users (desktop only)
+  let accountMenu = "";
+  if (user) {
+    const profileImageId = user.profileImage?.id || "";
+    const profileImageAlt = escapeHtml(user.profileImage?.alt || "");
+    const name = escapeHtml(user.name || "");
+    const username = escapeHtml(user.username || "");
+    accountMenu = `<div class="relative hidden lg:block lg:w-full lg:pb-2"><button aria-label="アカウントメニュー" class="hover:bg-cax-surface-subtle flex w-full items-center gap-3 rounded-full p-2 transition-colors"><img alt="${profileImageAlt}" class="h-10 w-10 shrink-0 rounded-full object-cover" decoding="async" height="40" loading="lazy" src="/images/profiles/${profileImageId}.webp" width="40"><div class="hidden min-w-0 flex-1 text-left lg:block"><div class="text-cax-text truncate text-sm font-bold">${name}</div><div class="text-cax-text-muted truncate text-sm">@${username}</div></div><span class="text-cax-text-muted hidden lg:block">···</span></button></div>`;
+  }
+
+  return `<nav class="border-cax-border bg-cax-surface fixed right-0 bottom-0 left-0 z-10 h-12 border-t lg:relative lg:h-full lg:w-48 lg:border-t-0 lg:border-r"><div class="relative grid grid-flow-col items-center justify-evenly lg:fixed lg:flex lg:h-full lg:w-48 lg:flex-col lg:justify-between lg:p-2"><ul class="grid grid-flow-col items-center justify-evenly lg:grid-flow-row lg:auto-rows-min lg:justify-start lg:gap-2">${items}</ul>${accountMenu}</div></nav>`;
 }
 
 // Wrap content in the app shell layout
-function wrapInAppShell(content: string): string {
-  const nav = generateNavHtml();
+function wrapInAppShell(content: string, user: any | null): string {
+  const nav = generateNavHtml(user);
   return `<div class="relative z-0 flex justify-center font-sans"><div class="bg-cax-surface text-cax-text flex min-h-screen max-w-full"><aside class="relative z-10">${nav}</aside><main class="relative z-0 w-screen max-w-screen-sm min-w-0 shrink pb-12 lg:pb-0">${content}</main></div></div>`;
 }
 
@@ -276,7 +294,8 @@ ssrRouter.get("/{*splat}", async (req, res, next) => {
     // For /search, /dm, /crok, /users, etc. - just render the shell with no page content
 
     // Wrap page content in the app shell (navigation + main area)
-    const appHtml = wrapInAppShell(pageContent);
+    const userObj = initialData.me;
+    const appHtml = wrapInAppShell(pageContent, userObj);
 
     // For the terms page, inject font preload and inline @font-face to speed up font loading
     let fontTags = "";
