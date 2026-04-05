@@ -29,9 +29,11 @@ export const UserProfileContainer = () => {
   }
 
   return (
-    <InfiniteScroll fetchMore={fetchMore}>
-      <title>{user.name} さんのタイムライン - CaX</title>
-      <UserProfilePage timeline={posts} user={user} />
-    </InfiniteScroll>
+    <>
+      <InfiniteScroll fetchMore={fetchMore}>
+        <title>{`${user.name} さんのタイムライン - CaX`}</title>
+        <UserProfilePage timeline={posts} user={user} />
+      </InfiniteScroll>
+    </>
   );
 };

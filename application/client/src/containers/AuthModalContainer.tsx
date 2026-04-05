@@ -1,9 +1,12 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 
 import { type AuthFormData } from "@web-speed-hackathon-2026/client/src/auth/schema";
 import { AuthModalPage } from "@web-speed-hackathon-2026/client/src/components/auth_modal/AuthModalPage";
 import { Modal } from "@web-speed-hackathon-2026/client/src/components/modal/Modal";
-import { HttpError, sendJSON } from "@web-speed-hackathon-2026/client/src/utils/fetchers";
+import {
+  HttpError,
+  sendJSON,
+} from "@web-speed-hackathon-2026/client/src/utils/fetchers";
 
 interface Props {
   id: string;
@@ -22,7 +25,9 @@ function getErrorCode(err: HttpError, type: "signin" | "signup"): string {
     responseJSON === null ||
     !("code" in responseJSON) ||
     typeof (responseJSON as Record<string, unknown>)["code"] !== "string" ||
-    !Object.keys(ERROR_MESSAGES).includes((responseJSON as Record<string, unknown>)["code"] as string)
+    !Object.keys(ERROR_MESSAGES).includes(
+      (responseJSON as Record<string, unknown>)["code"] as string,
+    )
   ) {
     if (type === "signup") {
       return "登録に失敗しました";
@@ -38,18 +43,6 @@ function getErrorCode(err: HttpError, type: "signin" | "signup"): string {
 export const AuthModalContainer = ({ id, onUpdateActiveUser }: Props) => {
   const ref = useRef<HTMLDialogElement>(null);
   const [resetKey, setResetKey] = useState(0);
-  useEffect(() => {
-    if (!ref.current) return;
-    const element = ref.current;
-
-    const handleToggle = () => {
-      setResetKey((key) => key + 1);
-    };
-    element.addEventListener("toggle", handleToggle);
-    return () => {
-      element.removeEventListener("toggle", handleToggle);
-    };
-  }, [ref, setResetKey]);
 
   const handleRequestCloseModal = useCallback(() => {
     ref.current?.close();
@@ -74,7 +67,12 @@ export const AuthModalContainer = ({ id, onUpdateActiveUser }: Props) => {
   );
 
   return (
-    <Modal id={id} ref={ref} closedby="any">
+    <Modal
+      id={id}
+      ref={ref}
+      closedby="any"
+      onClose={() => setResetKey((key) => key + 1)}
+    >
       <AuthModalPage
         key={resetKey}
         onRequestCloseModal={handleRequestCloseModal}
