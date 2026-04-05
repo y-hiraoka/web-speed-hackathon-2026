@@ -14,11 +14,17 @@ export const SearchFormSchema = v.object({
     v.check((raw) => {
       const { sinceDate } = parseSearchQuery(raw);
       return !sinceDate || isValidDate(sinceDate);
-    }, "since: の日付形式が不正です"),
+    }, (issue) => {
+      const { sinceDate } = parseSearchQuery(issue.input);
+      return `since: の日付形式が不正です: ${sinceDate}`;
+    }),
     v.check((raw) => {
       const { untilDate } = parseSearchQuery(raw);
       return !untilDate || isValidDate(untilDate);
-    }, "until: の日付形式が不正です"),
+    }, (issue) => {
+      const { untilDate } = parseSearchQuery(issue.input);
+      return `until: の日付形式が不正です: ${untilDate}`;
+    }),
     v.check((raw) => {
       const { sinceDate, untilDate } = parseSearchQuery(raw);
       return !(sinceDate && untilDate && new Date(sinceDate) > new Date(untilDate));

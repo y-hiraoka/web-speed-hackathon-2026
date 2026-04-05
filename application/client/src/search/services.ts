@@ -38,9 +38,15 @@ export const parseSearchQuery = (query: string) => {
 };
 
 export const isValidDate = (dateStr: string): boolean => {
-  const slowDateLike = /^(\d+)+-(\d+)+-(\d+)+$/;
-  if (!slowDateLike.test(dateStr)) return false;
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateStr);
+  if (!match) return false;
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
 
   const date = new Date(dateStr);
-  return !Number.isNaN(date.getTime());
+  if (Number.isNaN(date.getTime())) return false;
+
+  return date.getUTCFullYear() === year && date.getUTCMonth() + 1 === month && date.getUTCDate() === day;
 };
