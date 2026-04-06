@@ -22,5 +22,13 @@ staticRouter.use(
 );
 
 staticRouter.use(
+  "/assets",
+  serveStatic(`${CLIENT_DIST_PATH}/assets`, {
+    maxAge: "1y",
+    immutable: true,
+  }),
+);
+
+staticRouter.use(
   serveStatic(CLIENT_DIST_PATH),
 );
