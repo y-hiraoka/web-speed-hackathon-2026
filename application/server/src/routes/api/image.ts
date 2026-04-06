@@ -36,7 +36,7 @@ imageRouter.post("/images", async (req, res) => {
 
   // sharp で WebP に変換・リサイズし、サイズを取得
   const webpBuffer = await sharp(req.body)
-    .resize({ width: 1280, height: 1280, fit: "inside", withoutEnlargement: true })
+    .resize({ width: 640, height: 640, fit: "inside", withoutEnlargement: true })
     .webp({ quality: 80 })
     .toBuffer();
   const metadata = await sharp(webpBuffer).metadata();

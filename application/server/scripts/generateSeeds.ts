@@ -189,7 +189,7 @@ async function generateProfileImages(): Promise<ProfileImageSeed[]> {
     const jpgPath = path.join(profileDir, `${id}.jpg`);
     const webpPath = path.join(profileDir, `${id}.webp`);
     await sharp(jpgPath)
-      .resize({ width: 256, height: 256, fit: "cover" })
+      .resize({ width: 128, height: 128, fit: "cover" })
       .webp({ quality: 80 })
       .toFile(webpPath);
     results.push({ id, alt: "" });
@@ -228,7 +228,7 @@ function generateUsers(count: number, profileImages: ProfileImageSeed[]): UserSe
   return users;
 }
 
-const IMAGE_MAX_LONG_SIDE = 1280;
+const IMAGE_MAX_LONG_SIDE = 640;
 
 async function generateImages(): Promise<ImageSeed[]> {
   // Use existing image IDs from public/images/
