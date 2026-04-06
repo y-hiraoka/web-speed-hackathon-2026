@@ -1,4 +1,5 @@
 import {
+  BelongsToManySetAssociationsMixin,
   CreationOptional,
   DataTypes,
   ForeignKey,
@@ -9,6 +10,7 @@ import {
   UUIDV4,
 } from "sequelize";
 
+import { Image } from "@web-speed-hackathon-2026/server/src/models/Image";
 import { Movie } from "@web-speed-hackathon-2026/server/src/models/Movie";
 import { Sound } from "@web-speed-hackathon-2026/server/src/models/Sound";
 import { User } from "@web-speed-hackathon-2026/server/src/models/User";
@@ -20,6 +22,7 @@ export class Post extends Model<InferAttributes<Post>, InferCreationAttributes<P
   declare soundId?: ForeignKey<Sound["id"]>;
   declare text: string;
   declare createdAt: CreationOptional<Date>;
+  declare setImages: BelongsToManySetAssociationsMixin<Image, string>;
 }
 
 export function initPost(sequelize: Sequelize) {

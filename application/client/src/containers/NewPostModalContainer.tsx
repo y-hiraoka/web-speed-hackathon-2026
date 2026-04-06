@@ -1,9 +1,12 @@
-import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { useCallback, useId, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 
 import { Modal } from "@web-speed-hackathon-2026/client/src/components/modal/Modal";
 import { NewPostModalPage } from "@web-speed-hackathon-2026/client/src/components/new_post_modal/NewPostModalPage";
-import { sendFile, sendJSON } from "@web-speed-hackathon-2026/client/src/utils/fetchers";
+import {
+  sendFile,
+  sendJSON,
+} from "@web-speed-hackathon-2026/client/src/utils/fetchers";
 
 interface SubmitParams {
   images: File[];
@@ -12,10 +15,17 @@ interface SubmitParams {
   text: string;
 }
 
-async function sendNewPost({ images, movie, sound, text }: SubmitParams): Promise<Models.Post> {
+async function sendNewPost({
+  images,
+  movie,
+  sound,
+  text,
+}: SubmitParams): Promise<Models.Post> {
   const payload = {
     images: images
-      ? await Promise.all(images.map((image) => sendFile("/api/v1/images", image)))
+      ? await Promise.all(
+          images.map((image) => sendFile("/api/v1/images", image)),
+        )
       : [],
     movie: movie ? await sendFile("/api/v1/movies", movie) : undefined,
     sound: sound ? await sendFile("/api/v1/sounds", sound) : undefined,
@@ -33,21 +43,6 @@ export const NewPostModalContainer = ({ id }: Props) => {
   const dialogId = useId();
   const ref = useRef<HTMLDialogElement>(null);
   const [resetKey, setResetKey] = useState(0);
-  useEffect(() => {
-    const element = ref.current;
-    if (element == null) {
-      return;
-    }
-
-    const handleToggle = () => {
-      // モーダル開閉時にkeyを更新することでフォームの状態をリセットする
-      setResetKey((key) => key + 1);
-    };
-    element.addEventListener("toggle", handleToggle);
-    return () => {
-      element.removeEventListener("toggle", handleToggle);
-    };
-  }, []);
 
   const navigate = useNavigate();
 
@@ -75,7 +70,13 @@ export const NewPostModalContainer = ({ id }: Props) => {
   );
 
   return (
-    <Modal aria-labelledby={dialogId} id={id} ref={ref} closedby="any">
+    <Modal
+      aria-labelledby={dialogId}
+      id={id}
+      ref={ref}
+      closedby="any"
+      onClose={() => setResetKey((prev) => prev + 1)}
+    >
       <NewPostModalPage
         key={resetKey}
         id={dialogId}
