@@ -33,9 +33,6 @@ importers:
       katex:
         specifier: 0.16.25
         version: 0.16.25
-      normalize.css:
-        specifier: 8.0.1
-        version: 8.0.1
       react:
         specifier: 19.2.0
         version: 19.2.0
@@ -2216,9 +2213,6 @@ packages:
     resolution: {integrity: sha512-Tbj67rffqceeLpcRXrT7vKAN8CwfPeIBgM7E6iBkmKLV7bEMwpGgYLGv0jACUsECaa/vuxP0IjEont6umdMgtQ==}
     engines: {node: '>=6'}
     hasBin: true
-
-  normalize.css@8.0.1:
-    resolution: {integrity: sha512-qizSNPO93t1YUuUhP22btGOo3chcvDFqFaj2TRybP0DMxkHOCTYwp3n34fel4a31ORXy4m1Xq0Gyqpb5m33qIg==}
 
   npmlog@6.0.2:
     resolution: {integrity: sha512-/vBvz5Jfr9dT/aFWd0FIRf+T/Q2WBsLENygUaFUqstqsycmZAP/t5BvFJTK0viFmSUxiUKTUplWy5vt+rvKIxg==}
@@ -4932,8 +4926,6 @@ snapshots:
     dependencies:
       abbrev: 1.1.1
     optional: true
-
-  normalize.css@8.0.1: {}
 
   npmlog@6.0.2:
     dependencies:
