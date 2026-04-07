@@ -1,0 +1,6 @@
+@font-face {
+  font-family: "Rei no Are Mincho";
+  font-display: swap;
+  src: url(/fonts/ReiNoAreMincho-Heavy.woff2) format("woff2");
+  font-weight: bold;
+}
