@@ -1,12 +1,15 @@
 import "./index.css";
 
 import { createRoot } from "react-dom/client";
-import { BrowserRouter } from "react-router";
 
-import { AppContainer } from "@web-speed-hackathon-2026/client/src/containers/AppContainer";
+import { Root } from "@web-speed-hackathon-2026/client/src/root";
+
+declare global {
+  interface Window {
+    _INITIAL_DATA?: Record<string, unknown>;
+  }
+}
 
 createRoot(document.getElementById("app")!).render(
-  <BrowserRouter>
-    <AppContainer />
-  </BrowserRouter>,
+  <Root ssrData={window._INITIAL_DATA} />,
 );
