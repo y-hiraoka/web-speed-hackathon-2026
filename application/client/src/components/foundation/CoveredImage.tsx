@@ -36,6 +36,7 @@ export const CoveredImage = ({ alt, height, src, width }: Props) => {
     <div ref={callbackRef} className="relative h-full w-full overflow-hidden">
       <img
         alt={alt}
+        loading="lazy"
         className={classNames(
           "absolute left-1/2 top-1/2 max-w-none -translate-x-1/2 -translate-y-1/2",
           {

@@ -39,22 +39,27 @@ export const SoundPlayer = ({ sound }: Props) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const handleTogglePlaying = useCallback(() => {
     setIsPlaying((isPlaying) => {
-      if (isPlaying) {
-        audioRef.current?.pause();
-      } else {
-        audioRef.current?.play();
+      if (audioRef.current) {
+        if (!audioRef.current.src) {
+          audioRef.current.src = getSoundPath(sound.id);
+        }
+        if (isPlaying) {
+          audioRef.current.pause();
+        } else {
+          audioRef.current.play();
+        }
       }
       return !isPlaying;
     });
-  }, []);
+  }, [sound.id]);
 
   return (
     <div className="bg-cax-surface-subtle flex h-full w-full items-center justify-center">
       <audio
         ref={audioRef}
         loop={true}
+        preload="none"
         onTimeUpdate={handleTimeUpdate}
-        src={getSoundPath(sound.id)}
       />
       <div className="p-2">
         <button
